@@ -14,12 +14,28 @@
         <button id="soundButton" class="sound-button" type="button" aria-pressed="true">Som: ligado</button>
       </header>
 
+      <section id="classPicker" class="class-picker" aria-label="Escolha de classe">
+        <div class="picker-heading"><h2>Escolha seu caminho</h2><p id="classHint">Guerreiro selecionado · habilidade no nível 3: Redemoinho.</p></div>
+        <div class="class-grid">
+          <button type="button" class="class-card warrior-card" data-hero="warrior" aria-pressed="true"><span class="class-symbol">⚔</span><strong>Guerreiro</strong><span>5 HP · espada e resistência</span><small>Redemoinho em área</small></button>
+          <button type="button" class="class-card mage-card" data-hero="mage" aria-pressed="false"><span class="class-symbol">✧</span><strong>Mago</strong><span>3 HP · projéteis arcanos</span><small>Explosão arcana</small></button>
+          <button type="button" class="class-card rogue-card" data-hero="rogue" aria-pressed="false"><span class="class-symbol">◈</span><strong>Ladrão</strong><span>3 HP · agilidade e adagas</span><small>Ocultação e golpe crítico</small></button>
+          <button type="button" class="class-card archer-card" data-hero="archer" aria-pressed="false"><span class="class-symbol">➶</span><strong>Arqueiro</strong><span>4 HP · flechas à distância</span><small>Disparo de três flechas</small></button>
+        </div>
+      </section>
+
       <section class="game-shell" aria-label="Jogo Salto das Estrelas">
         <div class="hud">
           <div class="hud-item"><span class="hud-label">FASE</span><strong id="levelLabel">1 / 5</strong></div>
           <div class="hud-item"><span class="hud-label">ESTRELAS</span><strong id="coinLabel">0 / 0</strong></div>
           <div class="hud-item"><span class="hud-label">VIDAS</span><strong id="livesLabel">♥ ♥ ♥ ♡ ♡</strong></div>
           <button id="pauseButton" class="icon-button" type="button" aria-label="Pausar jogo" title="Pausar (P)">Ⅱ</button>
+        </div>
+
+        <div class="rpg-hud" aria-label="Progresso do personagem">
+          <div><strong id="classLabel">Guerreiro · Nível 1</strong><span id="hpLabel">5/5 HP · 0 moedas</span></div>
+          <div class="xp-display"><span id="xpLabel">0/60 XP</span><div class="xp-track"><div id="xpBar"></div></div></div>
+          <span id="energyLabel">100/100 energia · Habilidade no nível 3</span>
         </div>
 
         <div class="stage">
@@ -36,8 +52,7 @@
         </div>
 
         <div class="bottom-bar">
-          <p><kbd>←</kbd> <kbd>→</kbd> ou <kbd>A</kbd> <kbd>D</kbd> mover <span class="separator">·</span> <kbd>Espaço</kbd> pular <span class="separator">·</span> <kbd>J</kbd>/<kbd>Z</kbd> atacar <span class="separator">·</span> <kbd>K</kbd>/<kbd>Shift</kbd> esquivar <span class="separator">·</span> <kbd>P</kbd> pausar</p>
-          <span class="hint">Ataque após a investida!</span>
+          <p><kbd>A</kbd>/<kbd>D</kbd> mover · <kbd>Espaço</kbd> pular · <kbd>J</kbd>/<kbd>Z</kbd> atacar · <kbd>K</kbd>/<kbd>Shift</kbd> esquivar · <kbd>L</kbd>/<kbd>Q</kbd> habilidade · <kbd>E</kbd> interagir · <kbd>P</kbd> pausa</p>
         </div>
       </section>
 
@@ -48,17 +63,23 @@
         </div>
         <div class="touch-actions">
           <button class="touch-button jump-button" data-control="jump" type="button" aria-label="Pular">PULAR ↑</button>
-          <button class="touch-button attack-button" data-control="attack" type="button" aria-label="Atacar com a espada">GOLPE ⚔</button>
+          <button class="touch-button attack-button" data-control="attack" type="button" aria-label="Atacar">ATAQUE ⚔</button>
           <button class="touch-button dodge-button" data-control="dodge" type="button" aria-label="Esquivar">ESQUIVA ⇢</button>
+        </div>
+        <div class="touch-utility">
+          <button class="touch-button skill-button" data-control="skill" type="button" aria-label="Usar habilidade">HABILIDADE ✦</button>
+          <button class="touch-button interact-button" data-control="interact" type="button" aria-label="Interagir">INTERAGIR E</button>
         </div>
       </div>
 
       <section class="power-panel" aria-label="Poderes e dicas">
         <p id="powerLabel">Nenhum poder ativo</p>
         <p id="gameMessage" role="status" aria-live="polite"></p>
-        <div class="power-legend"><span>⚔ Espadas em plataformas avançadas</span><span class="shield-legend">◆ Escudo · 10s</span><span class="jump-legend">↑ Super salto · 12s</span><span class="heart-legend">♥ Vida extra · até 5</span><span>⚑ Checkpoint</span></div>
+        <p id="interactionLabel">E interage com placas, alavancas, baús e santuários.</p>
+        <div class="power-legend"><span>⚔ Equipamento de classe nas plataformas</span><span class="shield-legend">◆ Escudo · 10s</span><span class="jump-legend">↑ Super salto · 12s</span><span class="heart-legend">♥ Vida extra</span><span>⚑ Checkpoint</span></div>
+        <details class="reward-details"><summary>Recompensas de nível</summary><p id="rewardList"></p></details>
       </section>
-      <footer><p>5 fases, combate com espadas e chefão · Seu recorde fica neste dispositivo</p></footer>
+      <footer><p>4 classes · 5 fases ampliadas · Recordes por classe</p></footer>
     </main>
     <script src="game.js" defer></script>
   </body>

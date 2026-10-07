@@ -61,4 +61,32 @@ footer { text-align: center; padding-top: 20px; }
 @media (max-width: 650px) { .page { width: min(100%, calc(100% - 16px)); padding-top: 16px; } .topbar { margin-bottom: 15px; } .brand { font-size: 13px; } .topbar-note, .hint, .bottom-bar { display: none; } .game-shell { border-radius: 14px; } .hud { padding: 9px 12px; min-height: 58px; gap: 11px; } .hud-item { gap: 4px; flex-direction: column; } .hud-label { font-size: 9px; } .hud-item strong { font-size: 15px; } .icon-button { width: 32px; height: 32px; } .overlay-icon { font-size: 32px; margin: 0; } .overlay-card { padding: 4px; } .eyebrow { font-size: 9px; margin-bottom: 6px; } h1 { font-size: clamp(28px, 7vw, 42px); margin-bottom: 8px; } #overlayText { font-size: 12px; line-height: 1.3; margin-bottom: 12px; } .primary-button { min-height: 39px; font-size: 12px; } footer { font-size: 11px; } }
 @media (max-width: 420px) { .hud { gap: 8px; } #livesLabel { font-size: 12px; letter-spacing: 0; } .brand { letter-spacing: .06em; font-size: 11px; } .sound-button { padding: 8px; font-size: 11px; } }
 @media (max-width: 420px) { .overlay { padding: 8px; } .overlay-icon { display: none; } .eyebrow { font-size: 8px; } h1 { font-size: 28px; } #overlayText { font-size: 11px; margin-bottom: 8px; } .primary-button { min-height: 34px; padding: 0 14px; } }
-@media (pointer: coarse) and (max-width: 680px) { .touch-controls { align-items: stretch; flex-direction: column; } .touch-actions { justify-content: space-between; } .touch-actions .touch-button { flex: 1; width: auto; min-width: 0; height: 55px; font-size: 12px; } .touch-directions .touch-button { height: 52px; } }
+@media (max-width: 680px) { .touch-controls { display: flex; align-items: stretch; flex-direction: column; } .touch-actions { justify-content: space-between; } .touch-actions .touch-button { flex: 1; width: auto; min-width: 0; height: 55px; font-size: 12px; } .touch-directions .touch-button { height: 52px; } }
+.class-picker { margin-bottom: 22px; padding: 18px; background: #1c2138; border: 1px solid #515672; border-radius: 18px; }
+.class-picker.hidden { display: none; }
+.picker-heading { display: flex; gap: 16px; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+.picker-heading h2 { margin: 0; font: 700 22px Outfit, sans-serif; }
+.picker-heading p { margin: 0; color: #bcbfd4; font-size: 12px; }
+.class-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.class-card { --hero-color: #e8b47b; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; border: 1px solid #515672; border-radius: 12px; background: #ffffff04; color: #eef0ff; padding: 16px; transition: background .15s, border-color .15s; }
+.mage-card { --hero-color: #bd9dff; } .rogue-card { --hero-color: #93e7cf; } .archer-card { --hero-color: #b6d996; }
+.class-card[aria-pressed="true"] { border-color: var(--hero-color); background: #ffffff0e; box-shadow: inset 0 3px var(--hero-color); }
+.class-card:hover, .class-card:focus-visible { border-color: var(--hero-color); outline: 2px solid var(--hero-color); outline-offset: 2px; }
+.class-symbol { color: var(--hero-color); font-size: 24px; }
+.class-card strong { font: 700 19px Outfit, sans-serif; color: var(--hero-color); }
+.class-card span:not(.class-symbol), .class-card small { font-size: 12px; line-height: 1.45; color: #ccd0e3; }
+.rpg-hud { display: grid; grid-template-columns: 1fr 180px 1.3fr; align-items: center; gap: 22px; padding: 12px 24px; border-top: 1px solid #ffffff14; background: #171e33; font-size: 12px; }
+.rpg-hud > div:first-child { display: flex; flex-direction: column; gap: 5px; }
+#classLabel { color: #ffe2a6; } #hpLabel { color: #f7b2bc; } #energyLabel { color: #bccafa; line-height: 1.5; }
+.xp-display { display: flex; flex-direction: column; gap: 7px; color: #cbd5fa; }
+.xp-track { height: 6px; border-radius: 6px; background: #35425b; overflow: hidden; }
+#xpBar { width: 0; height: 100%; background: linear-gradient(90deg, #86c9e6, #c3a5ff); transition: width .25s; }
+.touch-utility { display: flex; gap: 8px; }
+.touch-utility .touch-button { width: 124px; height: 55px; font-size: 12px; }
+.skill-button { color: #efe8ff; background: #54436e; } .interact-button { color: #cdebea; background: #36535a; }
+.reward-details { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ffffff16; color: #bec9df; }
+.reward-details summary { cursor: pointer; color: #ffdf9c; }
+.reward-details p { margin-top: 10px; }
+#interactionLabel { color: #a7e4e2; }
+@media (max-width: 650px) { .class-picker { padding: 12px; } .picker-heading { flex-direction: column; gap: 7px; } .picker-heading h2 { font-size: 19px; } .class-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; } .class-card { padding: 12px; gap: 4px; } .class-symbol { font-size: 21px; } .class-card strong { font-size: 17px; } .class-card span:not(.class-symbol), .class-card small { font-size: 11px; } .rpg-hud { grid-template-columns: 1fr 105px; gap: 10px; padding: 10px 12px; font-size: 11px; } #energyLabel { grid-column: 1 / -1; } }
+@media (max-width: 680px) { .touch-utility .touch-button { flex: 1; width: auto; height: 42px; } }

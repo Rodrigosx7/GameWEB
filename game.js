@@ -16,6 +16,28 @@
   const powerLabel = document.getElementById('powerLabel');
   const gameMessage = document.getElementById('gameMessage');
   const soundButton = document.getElementById('soundButton');
+  const classLabel = document.getElementById('classLabel');
+  const xpLabel = document.getElementById('xpLabel');
+  const xpBar = document.getElementById('xpBar');
+  const hpLabel = document.getElementById('hpLabel');
+  const energyLabel = document.getElementById('energyLabel');
+  const rewardList = document.getElementById('rewardList');
+  const interactionLabel = document.getElementById('interactionLabel');
+  const CLASSES = {
+    warrior: { name: 'Guerreiro', color: '#e8b47b', hp: 5, speed: 300, attack: 'melee', interval: .36, dodge: 1.1, cost: 0, skill: 'Redemoinho', skillCost: 35, weapon: 'Espada' },
+    mage: { name: 'Mago', color: '#bd9dff', hp: 3, speed: 300, attack: 'magic', interval: .48, dodge: 1.1, cost: 10, skill: 'Explosão arcana', skillCost: 35, weapon: 'Cajado' },
+    rogue: { name: 'Ladrão', color: '#93e7cf', hp: 3, speed: 355, attack: 'melee', interval: .23, dodge: .75, cost: 0, skill: 'Véu das sombras', skillCost: 25, weapon: 'Adagas' },
+    archer: { name: 'Arqueiro', color: '#b6d996', hp: 4, speed: 325, attack: 'arrow', interval: .38, dodge: 1, cost: 5, skill: 'Chuva de flechas', skillCost: 25, weapon: 'Arco' },
+  };
+  let selectedClass = 'warrior';
+  let progress = { level: 1, xp: 0, gold: 0, bonusHp: 0, bonusDamage: 0, bonusEnergy: 0, kills: 0, claims: new Set(), rewards: [] };
+  const MAX_LEVEL = 15;
+  function heroClass() { return CLASSES[selectedClass]; }
+  function maxHp() { return heroClass().hp + progress.bonusHp; }
+  function maxEnergy() { return 100 + progress.bonusEnergy; }
+  function xpNeeded() { return 60 + (progress.level - 1) * 35; }
+  function attackDamage() { return WEAPONS[weaponTier].damage + progress.bonusDamage; }
+  function equippedName() { return `${heroClass().weapon} ${['de treino', 'da Aurora', 'do Vento', 'Astral', 'Lunar', 'do Eclipse'][weaponTier]}`; }
   const POWER_TYPES = {
     shield: { name: 'Escudo', icon: '◆', color: '#71e4ff', duration: 10 },
     jump: { name: 'Super salto', icon: '↑', color: '#b6ff8a', duration: 12 },
@@ -65,16 +87,16 @@
   const W = canvas.width;
   const H = canvas.height;
   const GROUND = 500;
-  const SPEED = 320;
   const JUMP = -720;
   const GRAVITY = 1900;
-  const controls = { left: false, right: false, jump: false, attack: false, dodge: false };
+  const controls = { left: false, right: false, jump: false, attack: false, dodge: false, skill: false, interact: false };
   const keyMap = {
     ArrowLeft: 'left', KeyA: 'left',
     ArrowRight: 'right', KeyD: 'right',
     ArrowUp: 'jump', KeyW: 'jump', Space: 'jump',
     KeyJ: 'attack', KeyZ: 'attack',
     KeyK: 'dodge', ShiftLeft: 'dodge', ShiftRight: 'dodge',
+    KeyL: 'skill', KeyQ: 'skill', KeyE: 'interact',
   };
   const WEAPONS = [
     { name: 'Lâmina de treino', color: '#d4e4ed', reach: 43, damage: 1 },
@@ -138,6 +160,32 @@
     },
   ];
 
+  LEVELS.forEach((design, index) => {
+    const oldWidth = design.width;
+    design.width += index === 4 ? 2800 : 2200;
+    design.objects = [{ type: 'sign', x: 150, y: GROUND - 48, w: 26, h: 48, text: 'Mobs dão XP e moedas. No nível 3 você aprende sua habilidade. E interage; L/Q usa a habilidade.' }];
+    design.crates = [];
+    design.objects.push({ type: 'lever', x: oldWidth - 150, y: GROUND - 38, w: 24, h: 38, bridge: [oldWidth, 130] });
+    for (let section = 0; section < 3; section++) {
+      const start = oldWidth + [130, 875, 1610][section];
+      const end = section === 2 ? design.width : start + 620;
+      design.ground.push([start, end]);
+      design.platforms.push([start + 100, 400, 110], [start + 320, 350, 100], [start + 440, 290, 90]);
+      design.stars.push([start + 155, 355], [start + 370, 305], [start + 485, 245], [start + 555, 450]);
+      design.spikes.push([start + 265, 464], [start + 490, 464]);
+      design.bonusEnemies.push([start + 210, start + 140, start + 390, section === 1 ? 'sentinel' : 'stalker']);
+      design.bonusEnemies.push([start + 540, start + 400, Math.min(end - 55, start + 580), section === 2 ? 'sentinel' : 'spitter']);
+      design.crates.push({ x: start + 170, y: GROUND - 30, w: 28, h: 30, hp: 2 });
+      if (section === 1) {
+        design.objects.push({ type: 'chest', x: start + 465, y: 263, w: 34, h: 27, guardIndex: design.enemies.length + design.bonusEnemies.length - 2 });
+        design.objects.push({ type: 'shrine', x: start + 80, y: GROUND - 54, w: 30, h: 54 });
+      }
+    }
+    design.loot.sword = [oldWidth + 875 + 370, 310];
+    design.loot.power[1] = oldWidth + 1610 + 485;
+    design.loot.power[2] = 255;
+  });
+
   let state = 'menu';
   let levelIndex = 0;
   let lives = 3;
@@ -150,6 +198,8 @@
   let jumpQueued = false;
   let attackQueued = false;
   let dodgeQueued = false;
+  let skillQueued = false;
+  let interactQueued = false;
   let weaponTier = 0;
   let particles = [];
   let lastFrame = 0;
@@ -157,16 +207,52 @@
   let checkpoint;
   let levelStartStars = 0;
   let messageTime = 0;
+  let floaters = [];
+  let afterimages = [];
+  let screenShake = 0;
+  let nearestObject = null;
   function notify(message) { gameMessage.textContent = message; messageTime = 4; }
+  function floatText(text, x, y, color = '#fff') { floaters.push({ text, x, y, color, life: 1.3 }); }
+  function rewardXp(amount, claimId) {
+    if (progress.claims.has(claimId)) return;
+    progress.claims.add(claimId);
+    progress.kills++;
+    progress.gold += 5 + levelIndex;
+    if (progress.level === MAX_LEVEL) { updateHud(); return; }
+    progress.xp += amount;
+    floatText(`+${amount} XP`, player.x + 15, player.y - 22, '#ffdf8a');
+    while (progress.level < MAX_LEVEL && progress.xp >= xpNeeded()) {
+      progress.xp -= xpNeeded();
+      progress.level++;
+      const lv = progress.level;
+      let reward;
+      if (lv === 3) reward = `${heroClass().skill} desbloqueado (L/Q)`;
+      else if (lv === 5) reward = 'Esquiva recarrega 20% mais rápido';
+      else if (lv === 9) reward = 'Habilidade recarrega 20% mais rápido';
+      else if (lv % 4 === 0) { progress.bonusDamage++; reward = '+1 de dano permanente'; }
+      else if (lv % 3 === 0) { progress.bonusEnergy += 20; reward = '+20 de energia máxima'; }
+      else { progress.bonusHp++; reward = '+1 de HP máximo'; }
+      player.hp = Math.min(maxHp(), player.hp + 2);
+      player.energy = maxEnergy();
+      progress.rewards.unshift(`Nível ${lv}: ${reward}`);
+      progress.rewards = progress.rewards.slice(0, 5);
+      notify(`NÍVEL ${lv}! ${reward}`);
+      floatText(`NÍVEL ${lv}`, player.x + 15, player.y - 55, heroClass().color);
+      burst(player.x + 15, player.y + 21, heroClass().color, 22);
+      sound('equip');
+    }
+    if (progress.level === MAX_LEVEL) progress.xp = 0;
+    updateHud();
+  }
   function makePlayer(x = 70) {
-    return { x, y: GROUND - 42, w: 30, h: 42, vx: 0, vy: 0, onGround: true, coyote: .1, invulnerable: 0, facing: 1, shield: 0, jump: 0, attackTime: 0, attackCooldown: 0, attackHits: new Set(), dashTime: 0, dashCooldown: 0 };
+    return { x, y: GROUND - 42, w: 30, h: 42, vx: 0, vy: 0, onGround: true, coyote: .1, invulnerable: 0, facing: 1, shield: 0, jump: 0, attackTime: 0, attackCooldown: 0, attackHits: new Set(), dashTime: 0, dashCooldown: 0, hp: maxHp(), energy: maxEnergy(), skillCooldown: 0, skillTime: 0, shadow: 0, anim: 0, hurtTime: 0 };
   }
 
   function makeEnemy([x, min, max, speedOrType], index) {
     const type = typeof speedOrType === 'string' ? speedOrType : ['stalker', 'sentinel', 'spitter'][index % 3];
     const speed = typeof speedOrType === 'number' ? speedOrType : type === 'stalker' ? 120 : 85;
     const hp = (type === 'sentinel' ? 3 : 2) + Math.floor(levelIndex / 2);
-    return { x, y: GROUND - 32, min, max, speed, type, hp, maxHp: hp, dir: 1, alive: true, w: 34, h: 32, stun: 0, windup: 0, charge: 0, attackCooldown: 1.4 + index * .2, guard: 0, alert: false };
+    return { id: `${levelIndex}:${index}`, x, y: GROUND - 32, min, max, speed, type, hp, maxHp: hp, dir: 1, alive: true, w: 34, h: 32, stun: 0, windup: 0, charge: 0, attackCooldown: 1.4 + index * .2, guard: 0, alert: false };
   }
 
   function loadLevel(index) {
@@ -184,8 +270,11 @@
       enemies: [...design.enemies, ...design.bonusEnemies].map(makeEnemy),
       powers: [{ type: design.loot.power[0], x: design.loot.power[1] - 15, y: design.loot.power[2], w: 30, h: 30, taken: false }],
       weapon: { tier: index + 1, x: design.loot.sword[0] - 15, y: design.loot.sword[1], w: 30, h: 38, taken: false },
+      objects: design.objects.map(object => ({ ...object, used: false })),
+      crates: design.crates.map(crate => ({ ...crate, broken: false })),
+      heroShots: [],
       checkpoints: design.ground.slice(1).map(([x]) => ({ x: x + 55, y: GROUND - 60, w: 24, h: 60, active: false })),
-      boss: design.boss ? { x: 2650, y: GROUND - 78, w: 80, h: 78, hp: 9, maxHp: 9, cooldown: 0, attack: 2.4, dir: -1, active: false, volley: 0, lunge: 0 } : null,
+      boss: design.boss ? { x: design.width - 550, y: GROUND - 78, w: 80, h: 78, hp: 32, maxHp: 32, cooldown: 0, attack: 2.4, dir: -1, active: false, volley: 0, lunge: 0 } : null,
       projectiles: [],
       portal: { x: design.width - 100, y: GROUND - 89, w: 50, h: 89 },
     };
@@ -195,8 +284,10 @@
     jumpQueued = false;
     attackQueued = false;
     dodgeQueued = false;
+    skillQueued = interactQueued = false;
+    floaters = []; afterimages = []; nearestObject = null;
     messageTime = 0;
-    gameMessage.textContent = design.boss ? 'O portal abre quando você derrotar o Guardião do Eclipse.' : 'Espadas guardadas nas plataformas. J/Z golpeia; K/Shift esquiva.';
+    gameMessage.textContent = design.boss ? 'O portal abre quando você derrotar o Guardião do Eclipse.' : 'Equipamentos nas plataformas. J/Z ataca; K/Shift esquiva; E interage.';
     levelStars = 0;
     camera = 0;
     particles = [];
@@ -209,9 +300,15 @@
     setText(coinLabel, `${levelStars} / ${level.stars.length}`);
     setText(livesLabel, Array.from({ length: MAX_LIVES }, (_, i) => i < lives ? '♥' : '♡').join(' '));
     const active = ['shield', 'jump'].filter(type => player[type] > 0).map(type => `${POWER_TYPES[type].icon} ${POWER_TYPES[type].name}: ${Math.ceil(player[type])}s`);
-    const gear = `${WEAPONS[weaponTier].name} · ${WEAPONS[weaponTier].damage} dano`;
+    const gear = `${equippedName()} · ${attackDamage()} dano`;
     const dodge = player.dashCooldown <= 0 ? 'Esquiva pronta' : `Esquiva ${Math.ceil(player.dashCooldown * 10) / 10}s`;
     setText(powerLabel, [gear, dodge, ...active].join(' · '));
+    setText(classLabel, `${heroClass().name} · Nível ${progress.level}`);
+    setText(hpLabel, `${player.hp}/${maxHp()} HP · ${progress.gold} moedas`);
+    setText(energyLabel, `${Math.floor(player.energy)}/${maxEnergy()} energia · ${progress.level < 3 ? 'Habilidade no nível 3' : player.skillCooldown > 0 ? `${heroClass().skill}: ${Math.ceil(player.skillCooldown)}s` : `${heroClass().skill} pronta (L/Q)`}`);
+    setText(xpLabel, progress.level === MAX_LEVEL ? 'Nível máximo' : `${progress.xp}/${xpNeeded()} XP`);
+    xpBar.style.width = `${progress.level === MAX_LEVEL ? 100 : progress.xp / xpNeeded() * 100}%`;
+    setText(rewardList, progress.rewards.join(' · ') || 'Próximos prêmios: nível 2 +HP · nível 3 habilidade · nível 4 +dano · nível 5 esquiva mais rápida');
   }
 
   function showOverlay(icon, eyebrow, title, message, button, action) {
@@ -223,16 +320,19 @@
     overlayButton.onclick = action;
     overlay.classList.remove('hidden');
     pauseButton.disabled = state === 'menu' || state === 'won' || state === 'gameOver';
+    document.getElementById('classPicker').classList.toggle('hidden', !['menu', 'won', 'gameOver'].includes(state));
   }
 
   function hideOverlay() {
     overlay.classList.add('hidden');
     pauseButton.disabled = false;
+    document.getElementById('classPicker').classList.add('hidden');
   }
 
   function startGame() {
     enableAudio();
     weaponTier = 0;
+    progress = { level: 1, xp: 0, gold: 0, bonusHp: 0, bonusDamage: 0, bonusEnergy: 0, kills: 0, claims: new Set(), rewards: [] };
     lives = 3;
     totalStars = 0;
     elapsed = 0;
@@ -259,10 +359,20 @@
     }
   }
 
-  function die(falling = false) {
+  function die(falling = false, damage = 1) {
     if (state !== 'playing' || (!falling && (player.invulnerable > 0 || player.shield > 0))) return false;
     sound('hurt');
+    screenShake = .18;
     burst(player.x + 15, player.y + 21, '#ff8ba6', 15);
+    player.hp = falling ? 0 : Math.max(0, player.hp - damage);
+    if (player.hp > 0) {
+      player.invulnerable = .9;
+      player.hurtTime = .16;
+      player.vy = -180;
+      floatText(`-${damage} HP`, player.x + 15, player.y - 10, '#ff92ae');
+      updateHud();
+      return true;
+    }
     lives--;
     if (lives <= 0) {
       state = 'gameOver';
@@ -276,11 +386,13 @@
       totalStars = levelStartStars + levelStars;
       level.enemies = level.enemyLayout.map(makeEnemy);
       level.projectiles = [];
-      if (level.boss) Object.assign(level.boss, { x: 2650, hp: 9, cooldown: 0, attack: 2.4, active: false, volley: 0, lunge: 0 });
+      level.heroShots = [];
+      if (level.boss) Object.assign(level.boss, { x: level.width - 550, hp: 32, cooldown: 0, attack: 2.4, active: false, volley: 0, lunge: 0 });
       camera = Math.max(0, Math.min(level.width - W, player.x - W * .38));
       jumpQueued = false;
       attackQueued = false;
       dodgeQueued = false;
+      skillQueued = interactQueued = false;
       updateHud();
       notify(checkpoint.x > 70 ? 'De volta ao checkpoint!' : 'Tente de novo!');
     }
@@ -297,9 +409,9 @@
       const seconds = Math.round(elapsed);
       let record = '';
       try {
-        const previous = Number(localStorage.getItem('salto-das-estrelas-recorde-v3')) || Infinity;
+        const previous = Number(localStorage.getItem(`salto-recorde-v4-${selectedClass}`)) || Infinity;
         if (seconds < previous) {
-          localStorage.setItem('salto-das-estrelas-recorde-v3', String(seconds));
+          localStorage.setItem(`salto-recorde-v4-${selectedClass}`, String(seconds));
           record = ' Novo recorde!';
         } else {
           record = ` Recorde: ${previous}s.`;
@@ -321,7 +433,7 @@
   }
 
   function meleeBox() {
-    const reach = WEAPONS[weaponTier].reach;
+    const reach = WEAPONS[weaponTier].reach + (selectedClass === 'warrior' ? 10 : -5);
     return { x: player.facing > 0 ? player.x + player.w - 2 : player.x - reach + 2, y: player.y + 2, w: reach, h: player.h - 2 };
   }
 
@@ -334,41 +446,117 @@
       return false;
     }
     enemy.hp -= damage;
+    floatText(`-${damage}`, enemy.x + 17, enemy.y - 10, '#fff1b3');
+    screenShake = .06;
     enemy.stun = .32;
     enemy.windup = enemy.charge = 0;
     enemy.x = Math.max(enemy.min, Math.min(enemy.max, enemy.x + player.facing * 24));
     sound('hit'); burst(enemy.x + 17, enemy.y + 15, '#f4b5ff', 12);
-    if (enemy.hp <= 0) { enemy.alive = false; burst(enemy.x + 17, enemy.y + 15, '#db9eff', 16); }
+    if (enemy.hp <= 0) {
+      enemy.alive = false; burst(enemy.x + 17, enemy.y + 15, '#db9eff', 16);
+      rewardXp((enemy.type === 'sentinel' ? 40 : enemy.type === 'spitter' ? 35 : 25) + levelIndex * 5, enemy.id);
+    }
     return true;
   }
 
+  function damageBoss(damage) {
+    const boss = level.boss;
+    if (!boss?.active || boss.hp <= 0 || boss.cooldown > 0) return false;
+    boss.hp = Math.max(0, boss.hp - damage);
+    boss.cooldown = .45; boss.lunge = 0;
+    floatText(`-${damage}`, boss.x + 40, boss.y - 24, '#ffcf9b');
+    burst(boss.x + 40, boss.y + 35, '#ffc46e', 22); sound('hit');
+    screenShake = .12;
+    if (boss.hp === 0) {
+      level.projectiles = [];
+      rewardXp(250, `${levelIndex}:boss`);
+      notify('Guardião derrotado! O portal está aberto.'); sound('portal');
+    }
+    return true;
+  }
+
+  function breakCrate(crate, damage) {
+    if (crate.broken) return;
+    crate.hp -= damage;
+    burst(crate.x + 14, crate.y + 10, '#caa779', 8);
+    if (crate.hp <= 0) {
+      crate.broken = true; progress.gold += 4;
+      player.energy = Math.min(maxEnergy(), player.energy + 10);
+      floatText('+4 moedas', crate.x + 14, crate.y - 10, '#ffe39a');
+      sound('hit'); updateHud();
+    }
+  }
+
+  function fireShot(kind, damage, angle = 0) {
+    const speed = kind === 'magic' ? 520 : 700;
+    level.heroShots.push({ kind, x: player.x + 15 + player.facing * 15, y: player.y + 19, w: kind === 'magic' ? 15 : 25, h: kind === 'magic' ? 15 : 8, vx: player.facing * speed * Math.cos(angle), vy: speed * Math.sin(angle), damage, life: 1.5 + weaponTier * .12, dead: false });
+  }
+
+  function updateHeroShots(dt) {
+    for (const shot of level.heroShots) {
+      if (shot.dead) continue;
+      shot.x += shot.vx * dt; shot.y += shot.vy * dt; shot.life -= dt;
+      if (level.solids.some(block => intersects(shot, block))) shot.dead = true;
+      if (!shot.dead) for (const enemy of level.enemies) {
+        if (!enemy.alive || !intersects(shot, enemy)) continue;
+        damageEnemy(enemy, shot.damage, shot.kind === 'magic'); shot.dead = true; break;
+      }
+      if (!shot.dead && level.boss?.active && level.boss.hp > 0 && intersects(shot, level.boss)) { damageBoss(shot.damage); shot.dead = true; }
+      if (!shot.dead) for (const crate of level.crates) {
+        if (crate.broken || !intersects(shot, crate)) continue;
+        breakCrate(crate, shot.damage); shot.dead = true; break;
+      }
+      if (shot.dead) burst(shot.x, shot.y, shot.kind === 'magic' ? '#bd9dff' : '#d9f4ad', 5);
+    }
+    level.heroShots = level.heroShots.filter(shot => !shot.dead && shot.life > 0);
+  }
+
+  function areaAttack(radius, damage) {
+    const x = player.x + 15, y = player.y + 21;
+    const close = target => Math.hypot(target.x + target.w / 2 - x, target.y + target.h / 2 - y) < radius;
+    for (const enemy of level.enemies) if (enemy.alive && close(enemy)) damageEnemy(enemy, damage, true);
+    if (level.boss && close(level.boss)) damageBoss(damage);
+    for (const crate of level.crates) if (!crate.broken && close(crate)) breakCrate(crate, damage);
+    for (const shot of level.projectiles) if (close(shot)) shot.dead = true;
+  }
+
+  function useSkill() {
+    if (progress.level < 3) { notify('A habilidade da classe desbloqueia no nível 3. Derrote mobs para ganhar XP.'); return; }
+    if (player.skillCooldown > 0) return;
+    if (player.energy < heroClass().skillCost) { notify('Energia insuficiente para a habilidade.'); return; }
+    player.energy -= heroClass().skillCost;
+    player.skillCooldown = (selectedClass === 'mage' ? 7 : 6) * (progress.level >= 9 ? .8 : 1);
+    player.skillTime = .55;
+    if (selectedClass === 'warrior') areaAttack(110, attackDamage() + 2);
+    if (selectedClass === 'mage') areaAttack(175, attackDamage() + 3);
+    if (selectedClass === 'rogue') { player.shadow = 4; player.invulnerable = Math.max(player.invulnerable, .4); }
+    if (selectedClass === 'archer') for (const angle of [-.16, 0, .16]) fireShot('arrow', attackDamage() + 1, angle);
+    burst(player.x + 15, player.y + 21, heroClass().color, 24);
+    sound('power'); notify(`${heroClass().skill}!`);
+  }
+
   function strike() {
-    if (player.attackTime <= 0) return;
+    if (player.attackTime <= 0 || heroClass().attack !== 'melee') return;
     const hit = meleeBox();
     for (const enemy of level.enemies) {
       if (!enemy.alive || player.attackHits.has(enemy) || !intersects(hit, enemy)) continue;
       player.attackHits.add(enemy);
-      damageEnemy(enemy, WEAPONS[weaponTier].damage);
+      const critical = player.shadow > 0;
+      if (damageEnemy(enemy, attackDamage() * (critical ? 2 : 1))) player.shadow = 0;
     }
     const boss = level.boss;
     if (boss?.active && boss.hp > 0 && !player.attackHits.has(boss) && intersects(hit, boss)) {
       player.attackHits.add(boss);
-      if (boss.cooldown <= 0) {
-        boss.hp = Math.max(0, boss.hp - WEAPONS[weaponTier].damage);
-        boss.cooldown = .7;
-        boss.lunge = 0;
-        sound('hit'); burst(boss.x + 40, boss.y + 35, '#ffc46e', 22);
-        if (boss.hp === 0) {
-          level.projectiles = [];
-          notify('Guardião derrotado! O portal está aberto.');
-          sound('portal');
-        }
-      } else sound('block');
+      if (damageBoss(attackDamage() * (player.shadow > 0 ? 2 : 1))) player.shadow = 0;
+      else sound('block');
     }
     for (const shot of level.projectiles) {
       if (!shot.dead && intersects(hit, shot)) {
         shot.dead = true; sound('hit'); burst(shot.x + 10, shot.y + 10, '#ffc46e', 8);
       }
+    }
+    for (const crate of level.crates) {
+      if (!crate.broken && !player.attackHits.has(crate) && intersects(hit, crate)) { player.attackHits.add(crate); breakCrate(crate, attackDamage()); }
     }
   }
 
@@ -379,7 +567,7 @@
     enemy.guard = Math.max(0, enemy.guard - dt);
     if (enemy.stun > 0) return;
     const distance = player.x - enemy.x;
-    const near = Math.abs(distance) < (enemy.type === 'spitter' ? 460 : 330) && Math.abs(player.y - enemy.y) < 140;
+    const near = player.shadow <= 0 && Math.abs(distance) < (enemy.type === 'spitter' ? 460 : 330) && Math.abs(player.y - enemy.y) < 140;
     enemy.alert = near;
     if (!near) {
       enemy.windup = enemy.charge = 0;
@@ -426,6 +614,57 @@
     return false;
   }
 
+  function objectDescription(object) {
+    if (object.type === 'sign') return 'E · Ler placa';
+    if (object.type === 'lever') return object.used ? 'Atalho aberto' : 'E · Abrir ponte do atalho';
+    if (object.type === 'shrine') return object.used ? 'Santuário já utilizado' : 'E · Restaurar HP e energia (30 moedas)';
+    if (object.type === 'chest') {
+      if (object.used) return 'Baú aberto';
+      const guard = level.enemies.find(enemy => enemy.id === `${levelIndex}:${object.guardIndex}`);
+      return guard?.alive ? 'Baú selado · derrote o guarda' : 'E · Abrir baú raro';
+    }
+    return '';
+  }
+
+  function interact() {
+    const object = nearestObject;
+    if (!object) return;
+    if (object.type === 'sign') { notify(object.text); return; }
+    if (object.used) return;
+    if (object.type === 'chest') {
+      const guard = level.enemies.find(enemy => enemy.id === `${levelIndex}:${object.guardIndex}`);
+      if (guard?.alive) { notify('O guarda mantém o baú selado. Derrote-o primeiro.'); return; }
+      progress.gold += 25; progress.bonusEnergy += 5;
+      player.energy = maxEnergy();
+      notify('Baú raro: +25 moedas e +5 de energia máxima permanente!');
+      floatText('+25 moedas · +5 energia', object.x + 17, object.y - 20, '#ffe39a');
+    }
+    if (object.type === 'shrine') {
+      if (progress.gold < 30) { notify('Você precisa de 30 moedas. Derrote mobs ou quebre caixas.'); return; }
+      progress.gold -= 30; player.hp = maxHp(); player.energy = maxEnergy();
+      notify('Santuário ativado: HP e energia restaurados.');
+    }
+    if (object.type === 'lever') {
+      const [x, w] = object.bridge;
+      level.solids.push({ x, y: GROUND, w, h: 18, bridge: true });
+      notify('Atalho aberto! A ponte permanece aberta ao perder uma vida.');
+    }
+    object.used = true; sound('power');
+    burst(object.x + object.w / 2, object.y + 15, '#f7d695', 18);
+    updateHud();
+  }
+
+  function updateInteraction() {
+    nearestObject = null;
+    let nearestDistance = 75;
+    for (const object of level.objects) {
+      const distance = Math.hypot(player.x + 15 - object.x - object.w / 2, player.y + 21 - object.y - object.h / 2);
+      if (distance < nearestDistance) { nearestObject = object; nearestDistance = distance; }
+    }
+    const message = nearestObject ? objectDescription(nearestObject) : 'E interage com placas, alavancas, baús e santuários.';
+    if (interactionLabel.textContent !== message) interactionLabel.textContent = message;
+  }
+
   function update(dt) {
     if (state !== 'playing') return;
     elapsed += dt;
@@ -438,25 +677,37 @@
     player.attackCooldown = Math.max(0, player.attackCooldown - dt);
     player.dashCooldown = Math.max(0, player.dashCooldown - dt);
     player.dashTime = Math.max(0, player.dashTime - dt);
+    player.skillCooldown = Math.max(0, player.skillCooldown - dt);
+    player.skillTime = Math.max(0, player.skillTime - dt);
+    player.shadow = Math.max(0, player.shadow - dt);
+    player.hurtTime = Math.max(0, player.hurtTime - dt);
+    player.energy = Math.min(maxEnergy(), player.energy + dt * (selectedClass === 'mage' ? 14 : 18));
+    player.anim += dt * (Math.abs(player.vx) > 10 ? 11 : 3);
     if (attackQueued && player.attackCooldown === 0) {
-      player.attackTime = .2;
-      player.attackCooldown = .35;
-      player.attackHits = new Set();
-      sound('slash');
+      if (player.energy >= heroClass().cost) {
+        player.energy -= heroClass().cost;
+        player.attackTime = .2;
+        player.attackCooldown = heroClass().interval;
+        player.attackHits = new Set();
+        if (heroClass().attack !== 'melee') fireShot(heroClass().attack, attackDamage());
+        sound(heroClass().attack === 'melee' ? 'slash' : 'shot');
+      } else notify('Energia baixa. Aguarde a recuperação.');
     }
     if (dodgeQueued && player.dashCooldown === 0) {
       player.dashTime = .18;
-      player.dashCooldown = 1.1;
+      player.dashCooldown = heroClass().dodge * (progress.level >= 5 ? .8 : 1);
       player.invulnerable = Math.max(player.invulnerable, .24);
       if (controls.left !== controls.right) player.facing = controls.right ? 1 : -1;
       burst(player.x + 15, player.y + 21, '#ade9ff', 12);
       sound('dodge');
     }
     attackQueued = dodgeQueued = false;
+    if (skillQueued) useSkill();
+    skillQueued = false;
     updateHud();
     player.invulnerable = Math.max(0, player.invulnerable - dt);
-    player.vx = player.dashTime > 0 ? player.facing * 760 : (Number(controls.right) - Number(controls.left)) * SPEED;
-    if (player.vx && player.dashTime === 0) player.facing = Math.sign(player.vx);
+    player.vx = player.hurtTime > 0 ? -player.facing * 170 : player.dashTime > 0 ? player.facing * 760 : (Number(controls.right) - Number(controls.left)) * heroClass().speed;
+    if (player.vx && player.dashTime === 0 && player.hurtTime === 0) player.facing = Math.sign(player.vx);
     if (player.onGround) player.coyote = .1;
     else player.coyote = Math.max(0, player.coyote - dt);
     if (jumpQueued && player.coyote > 0 && player.dashTime === 0) {
@@ -477,6 +728,7 @@
       player.dashTime = 0;
     }
 
+    const wasGrounded = player.onGround;
     player.vy += GRAVITY * dt;
     player.y += player.vy * dt;
     player.onGround = false;
@@ -488,6 +740,8 @@
       } else player.y = block.y + block.h;
       player.vy = 0;
     }
+    if (!wasGrounded && player.onGround) burst(player.x + 15, player.y + 42, '#9cc5b8', 5);
+    if (player.dashTime > 0 && afterimages.length < 9) afterimages.push({ x: player.x, y: player.y, life: .18, color: heroClass().color });
 
     for (const star of level.stars) {
       if (star.taken) continue;
@@ -518,7 +772,7 @@
       level.weapon.taken = true;
       weaponTier = Math.max(weaponTier, level.weapon.tier);
       sound('equip'); burst(level.weapon.x + 15, level.weapon.y + 19, WEAPONS[weaponTier].color, 20);
-      notify(`${WEAPONS[weaponTier].name} equipada! Alcance e dano aumentaram.`);
+      notify(`${equippedName()} equipado! Alcance e dano aumentaram.`);
       updateHud();
     }
     for (const flag of level.checkpoints) {
@@ -529,7 +783,10 @@
       notify('Checkpoint ativado! Sua coleta de estrelas foi salva.');
     }
 
-    strike();
+    updateInteraction();
+    if (interactQueued) interact();
+    interactQueued = false;
+    strike(); updateHeroShots(dt);
     for (const enemy of level.enemies) {
       if (!enemy.alive) continue;
       updateEnemy(enemy, dt);
@@ -539,7 +796,7 @@
           player.vy = -440;
           sound('stomp');
           damageEnemy(enemy, 1, true);
-        } else if (enemy.stun <= 0 && die()) return;
+        } else if (enemy.stun <= 0 && die(false, enemy.charge > 0 ? 2 : 1)) return;
       }
       if (state !== 'playing') return;
     }
@@ -561,6 +818,11 @@
       p.life -= dt;
     }
     particles = particles.filter(p => p.life > 0);
+    for (const text of floaters) { text.y -= dt * 24; text.life -= dt; }
+    floaters = floaters.filter(text => text.life > 0);
+    for (const ghost of afterimages) ghost.life -= dt;
+    afterimages = afterimages.filter(ghost => ghost.life > 0);
+    screenShake = Math.max(0, screenShake - dt);
     const target = Math.max(0, Math.min(level.width - W, player.x - W * .38));
     camera += (target - camera) * Math.min(1, dt * 7);
   }
@@ -569,14 +831,14 @@
     const boss = level.boss;
     if (!boss || boss.hp <= 0) return false;
     boss.cooldown = Math.max(0, boss.cooldown - dt);
-    if (!boss.active && player.x > 2230) {
+    if (!boss.active && player.x > level.width - 1000) {
       boss.active = true; notify('Guardião do Eclipse! Ataque com a espada ou pule na cabeça. Desvie das esferas.');
     }
     if (!boss.active) return false;
     boss.lunge = Math.max(0, boss.lunge - dt);
     boss.x += boss.dir * (boss.lunge > 0 ? 390 : 65 + (boss.maxHp - boss.hp) * 9) * dt;
-    if (boss.x < 2460) { boss.x = 2460; boss.dir = 1; }
-    if (boss.x > 2840) { boss.x = 2840; boss.dir = -1; }
+    if (boss.x < level.width - 850) { boss.x = level.width - 850; boss.dir = 1; }
+    if (boss.x > level.width - 350) { boss.x = level.width - 350; boss.dir = -1; }
     boss.attack -= dt;
     if (boss.attack <= 0) {
       const direction = player.x + player.w / 2 < boss.x + boss.w / 2 ? -1 : 1;
@@ -596,13 +858,8 @@
       if (player.vy > 90 && player.y + player.h - player.vy * dt <= boss.y + 16) {
         player.y = boss.y - player.h; player.vy = -620;
         if (boss.cooldown === 0) {
-          boss.hp--; boss.cooldown = .8; sound('stomp');
-          burst(boss.x + 40, boss.y + 12, '#ffc46e', 22);
-          if (boss.hp === 0) {
-            level.projectiles = []; sound('portal');
-            notify('Guardião derrotado! O portal está aberto.');
-            return false;
-          }
+          damageBoss(1); sound('stomp');
+          if (boss.hp === 0) return false;
         }
       } else if (die()) return true;
     }
@@ -680,9 +937,42 @@
       ctx.fillRect(x - 8, 313 + i % 2 * 38, 42, 12);
       drawStar(x + 13, 310 + i % 2 * 38, 5, '#a9bde0');
     }
+    for (let i = 0; i < 8; i++) {
+      const x = ((i * 255 - camera * .32) % 1550 + 1550) % 1550 - 180;
+      const sway = Math.sin(time * .8 + i) * 6;
+      ctx.fillStyle = '#17213765';
+      if (levelIndex === 1 || levelIndex === 3) {
+        ctx.fillRect(x + 34, 235, 18, 285);
+        for (let tier = 0; tier < 3; tier++) {
+          ctx.beginPath(); ctx.moveTo(x - 38 + sway, 345 - tier * 48); ctx.lineTo(x + 44 + sway, 205 - tier * 35); ctx.lineTo(x + 126 + sway, 345 - tier * 48); ctx.fill();
+        }
+      } else {
+        ctx.fillRect(x, 325, 19, 160); ctx.fillRect(x + 94, 325, 19, 160);
+        ctx.strokeStyle = '#25344b85'; ctx.lineWidth = 17;
+        ctx.beginPath(); ctx.arc(x + 56, 330, 47, Math.PI, 0); ctx.stroke();
+        if (levelIndex === 4) {
+          ctx.beginPath(); ctx.moveTo(x - 12, 295); ctx.lineTo(x + 9, 255); ctx.lineTo(x + 31, 295); ctx.fill();
+        }
+      }
+    }
+    ctx.save();
+    for (let i = 0; i < 30; i++) {
+      const x = ((i * 173 - camera * .65 + time * 8) % 1300 + 1300) % 1300 - 100;
+      const y = 220 + (i * 41) % 280 + Math.sin(time + i) * 12;
+      ctx.globalAlpha = .15 + (Math.sin(time * 1.2 + i) + 1) * .18;
+      ctx.fillStyle = levelIndex === 4 ? '#ffb78a' : '#bfebf1';
+      ctx.beginPath(); ctx.arc(x, y, 1.5 + i % 2, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
   }
 
-  function drawGround(block) {
+  function drawGround(block, time) {
+    if (block.bridge) {
+      ctx.fillStyle = '#826652'; ctx.fillRect(block.x, block.y, block.w, 12);
+      ctx.strokeStyle = '#c4a57c'; ctx.lineWidth = 2;
+      for (let x = block.x + 4; x < block.x + block.w; x += 14) { ctx.beginPath(); ctx.moveTo(x, block.y); ctx.lineTo(x, block.y + 12); ctx.stroke(); }
+      return;
+    }
     ctx.fillStyle = '#394153';
     ctx.fillRect(block.x, block.y, block.w, block.h);
     ctx.fillStyle = '#557d7d';
@@ -696,6 +986,8 @@
         ctx.fillStyle = '#609b99';
         ctx.fillRect(x, block.y - 7, 2, 7);
         drawStar(x + 1, block.y - 9, 4, x % 2 ? '#ffb7c5' : '#fff1a3');
+        ctx.strokeStyle = '#79a7a4'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x + 15, block.y); ctx.quadraticCurveTo(x + 14, block.y - 10, x + 17 + Math.sin(time * 2 + x) * 4, block.y - 14); ctx.stroke();
       }
     }
   }
@@ -721,6 +1013,45 @@
   }
 
   function drawExtras(time) {
+    for (const [start] of level.ground) {
+      const x = start + 35;
+      if (x < camera - 50 || x > camera + W + 50) continue;
+      roundedRect(x, GROUND - 44, 5, 42, 2, '#4d3d3b');
+      ctx.save(); ctx.shadowColor = '#ffbc77'; ctx.shadowBlur = 22;
+      ctx.fillStyle = '#ffc789'; ctx.beginPath(); ctx.ellipse(x + 2, GROUND - 48, 5 + Math.sin(time * 11 + x), 10 + Math.sin(time * 8) * 2, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+    for (const crate of level.crates) {
+      if (crate.broken || crate.x < camera - 50 || crate.x > camera + W + 50) continue;
+      roundedRect(crate.x, crate.y, crate.w, crate.h, 3, '#836447');
+      ctx.strokeStyle = '#c7a16a'; ctx.lineWidth = 2;
+      ctx.strokeRect(crate.x + 3, crate.y + 3, crate.w - 6, crate.h - 6);
+      ctx.beginPath(); ctx.moveTo(crate.x + 3, crate.y + 3); ctx.lineTo(crate.x + 25, crate.y + 27); ctx.moveTo(crate.x + 25, crate.y + 3); ctx.lineTo(crate.x + 3, crate.y + 27); ctx.stroke();
+    }
+    for (const object of level.objects) {
+      if (object.x < camera - 60 || object.x > camera + W + 60) continue;
+      const { x, y } = object;
+      if (object.type === 'sign') {
+        roundedRect(x + 10, y + 18, 6, 30, 2, '#82664c'); roundedRect(x - 6, y, 38, 26, 4, '#ad8860');
+        ctx.fillStyle = '#f4e5c5'; ctx.font = 'bold 17px sans-serif'; ctx.fillText('?', x + 8, y + 20);
+      }
+      if (object.type === 'lever') {
+        roundedRect(x - 2, y + 27, 28, 11, 4, '#9fa5ad');
+        ctx.strokeStyle = object.used ? '#97dcbf' : '#e2ba90'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x + 12, y + 30); ctx.lineTo(x + (object.used ? 23 : 1), y + 5); ctx.stroke();
+      }
+      if (object.type === 'chest') {
+        roundedRect(x, y + 5, 34, 22, 5, '#8e6553'); roundedRect(x - 1, y + (object.used ? -8 : 0), 36, 11, 4, '#bf955f');
+        ctx.fillStyle = '#ffe1a0'; ctx.fillRect(x + 15, y + 9, 5, 9);
+        if (!object.used) drawStar(x + 17, y - 12 + Math.sin(time * 3) * 3, 6, '#ffc98b');
+      }
+      if (object.type === 'shrine') {
+        roundedRect(x - 4, y + 35, 38, 19, 5, '#737b8e'); roundedRect(x + 7, y + 14, 16, 30, 5, '#959aaf');
+        ctx.save(); ctx.shadowColor = object.used ? '#999' : '#96e9ff'; ctx.shadowBlur = 25;
+        drawStar(x + 15, y + 10 + Math.sin(time * 2) * 2, 13, object.used ? '#818f9b' : '#b3f0ff'); ctx.restore();
+      }
+      if (object === nearestObject && state === 'playing') {
+        roundedRect(x - 4, y - 33, 38, 20, 5, '#172238dc'); ctx.fillStyle = '#fff2be'; ctx.font = 'bold 12px sans-serif'; ctx.fillText('E', x + 10, y - 18);
+      }
+    }
     for (const flag of level.checkpoints) {
       ctx.fillStyle = '#465674'; ctx.fillRect(flag.x, flag.y, 5, 60);
       ctx.fillStyle = flag.active ? '#94ffa8' : '#e2deef';
@@ -746,6 +1077,8 @@
       ctx.beginPath(); ctx.moveTo(blade.x + 15, y + 31); ctx.lineTo(blade.x + 15, y + 2); ctx.stroke();
       ctx.strokeStyle = '#344260'; ctx.lineWidth = 5;
       ctx.beginPath(); ctx.moveTo(blade.x + 5, y + 25); ctx.lineTo(blade.x + 25, y + 25); ctx.stroke();
+      if (selectedClass === 'mage') drawStar(blade.x + 15, y + 1, 7, heroClass().color);
+      if (selectedClass === 'archer') { ctx.strokeStyle = heroClass().color; ctx.beginPath(); ctx.arc(blade.x + 14, y + 18, 17, -1.1, 1.1); ctx.stroke(); }
       ctx.restore();
     }
     const boss = level.boss;
@@ -768,45 +1101,78 @@
       ctx.save(); ctx.shadowColor = '#ffa273'; ctx.shadowBlur = 16;
       drawStar(shot.x + 10, shot.y + 10, 13, shot.owner === 'mob' ? '#b4afff' : '#ff996e'); ctx.restore();
     }
+    for (const shot of level.heroShots) {
+      ctx.save(); ctx.strokeStyle = heroClass().color; ctx.fillStyle = heroClass().color;
+      ctx.shadowColor = heroClass().color; ctx.shadowBlur = 14;
+      if (shot.kind === 'magic') {
+        drawStar(shot.x + 7, shot.y + 7, 9 + Math.sin(time * 16) * 2, '#d5bdff');
+        ctx.globalAlpha = .35; ctx.fillRect(shot.x - Math.sign(shot.vx) * 22, shot.y + 4, 23, 6);
+      } else {
+        ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(shot.x, shot.y + 4); ctx.lineTo(shot.x + Math.sign(shot.vx) * 25, shot.y + 4); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(shot.x + Math.sign(shot.vx) * 25, shot.y + 4); ctx.lineTo(shot.x + Math.sign(shot.vx) * 17, shot.y - 1); ctx.lineTo(shot.x + Math.sign(shot.vx) * 17, shot.y + 9); ctx.fill();
+      }
+      ctx.restore();
+    }
   }
 
   function drawPlayer(time) {
-    if (player.shield > 0 || player.jump > 0) {
-      ctx.save(); ctx.strokeStyle = player.shield > 0 ? '#71e4ff' : '#b6ff8a';
-      ctx.lineWidth = 3; ctx.shadowBlur = 14; ctx.shadowColor = ctx.strokeStyle;
-      ctx.beginPath(); ctx.ellipse(player.x + 15, player.y + 21, 26, 32, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-    }
+    const color = heroClass().color;
     if (player.invulnerable > 0 && Math.floor(time * 14) % 2 === 0) return;
-    const x = player.x; const y = player.y + (player.onGround && player.vx ? Math.sin(time * 19) * 2 : 0);
-    ctx.fillStyle = '#283951';
-    ctx.fillRect(x + 3, y + 32, 10, 10); ctx.fillRect(x + 18, y + 32, 10, 10);
-    roundedRect(x + 2, y + 13, 27, 25, 7, '#406d7c');
-    roundedRect(x + 2, y + 5, 27, 22, 8, '#d7dcdf');
-    ctx.fillStyle = '#24354f';
-    ctx.beginPath(); ctx.arc(x + 15, y + 12, 16, Math.PI, 0); ctx.fill();
-    ctx.fillRect(x + 1, y + 10, 29, 5);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(x + (player.facing > 0 ? 18 : 8), y + 17, 5, 5);
-    ctx.fillStyle = '#333450';
-    ctx.fillRect(x + (player.facing > 0 ? 21 : 8), y + 19, 2, 3);
-    ctx.fillStyle = '#a7e4e2';
-    ctx.fillRect(x + (player.facing > 0 ? 0 : 26), y + 25, 5, 5);
     ctx.save();
-    ctx.strokeStyle = WEAPONS[weaponTier].color;
-    ctx.lineWidth = player.attackTime > 0 ? 6 : 3;
-    ctx.lineCap = 'round';
-    ctx.beginPath();
-    const handX = x + (player.facing > 0 ? 29 : 1);
-    if (player.attackTime > 0) {
-      ctx.shadowBlur = 20; ctx.shadowColor = WEAPONS[weaponTier].color;
-      ctx.moveTo(handX, y + 23);
-      ctx.lineTo(handX + player.facing * WEAPONS[weaponTier].reach, y + 4);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(handX, y + 21, WEAPONS[weaponTier].reach, player.facing > 0 ? -.85 : Math.PI - .85, player.facing > 0 ? .6 : Math.PI + .6);
-      ctx.stroke();
+    if (player.shadow > 0) ctx.globalAlpha = .48;
+    const bob = player.onGround ? Math.sin(player.anim * 2) * (player.vx ? 1.8 : .7) : 0;
+    const x = player.x, y = player.y + bob;
+    const swing = player.onGround && player.vx ? Math.sin(player.anim) * 5 : player.onGround ? 0 : -3;
+    const cloth = Math.sin(time * 6) * 2 - player.vx / 100;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.moveTo(x + 5, y + 14); ctx.lineTo(x + 27, y + 14);
+    ctx.lineTo(x + 30 + cloth, y + 35); ctx.lineTo(x - 2 + cloth, y + 35); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = '#23314b'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x + 9, y + 29); ctx.lineTo(x + 9 + swing, y + 40);
+    ctx.moveTo(x + 22, y + 29); ctx.lineTo(x + 22 - swing, y + 40); ctx.stroke();
+    roundedRect(x + 7, y + 15, 17, 19, 5, selectedClass === 'warrior' ? '#6b7188' : '#31425b');
+    roundedRect(x + 3, y + 2, 26, 22, 9, '#e2e3e7');
+    ctx.fillStyle = '#293550';
+    ctx.beginPath(); ctx.arc(x + 16, y + 13, 16, Math.PI, 0); ctx.fill();
+    if (selectedClass === 'mage') {
+      ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(x - 1, y + 7); ctx.lineTo(x + 15, y - 13); ctx.lineTo(x + 33, y + 7); ctx.fill();
+      ctx.fillRect(x - 3, y + 6, 38, 4);
+    } else if (selectedClass === 'warrior') {
+      ctx.fillStyle = '#8291a6'; ctx.fillRect(x + 1, y + 5, 30, 6);
+      ctx.fillStyle = color; ctx.fillRect(x + 12, y - 4, 7, 10);
     } else {
-      ctx.moveTo(handX, y + 26); ctx.lineTo(handX + player.facing * 13, y + 5); ctx.stroke();
+      ctx.fillStyle = color; ctx.fillRect(x + 2, y + 7, 29, 4);
+      ctx.beginPath(); ctx.moveTo(x + 6, y + 9); ctx.lineTo(x - 9 + cloth, y + 13); ctx.lineTo(x + 5, y + 14); ctx.fill();
+    }
+    ctx.fillStyle = '#24334c';
+    ctx.fillRect(x + (player.facing > 0 ? 18 : 7), y + 14, 6, 6);
+    ctx.fillStyle = '#fff'; ctx.fillRect(x + (player.facing > 0 ? 21 : 8), y + 15, 2, 3);
+    const handX = x + (player.facing > 0 ? 29 : 1);
+    ctx.strokeStyle = color; ctx.lineWidth = 3;
+    if (heroClass().attack === 'melee') {
+      const angle = player.attackTime > 0 ? -1.1 + (1 - player.attackTime / .2) * 2.2 : -.8;
+      const reach = player.attackTime > 0 ? WEAPONS[weaponTier].reach : 24;
+      ctx.strokeStyle = WEAPONS[weaponTier].color;
+      ctx.beginPath(); ctx.moveTo(handX, y + 25); ctx.lineTo(handX + player.facing * Math.cos(angle) * reach, y + 25 + Math.sin(angle) * reach); ctx.stroke();
+      if (player.attackTime > 0) {
+        ctx.shadowColor = color; ctx.shadowBlur = 16; ctx.lineWidth = 5;
+        ctx.beginPath(); ctx.arc(handX, y + 22, reach, player.facing > 0 ? angle - .6 : Math.PI - angle - .6, player.facing > 0 ? angle + .3 : Math.PI - angle + .3); ctx.stroke();
+      }
+    } else if (selectedClass === 'mage') {
+      ctx.strokeStyle = '#b9a382'; ctx.beginPath(); ctx.moveTo(handX, y + 38); ctx.lineTo(handX + player.facing * 8, y + 1); ctx.stroke();
+      ctx.shadowColor = color; ctx.shadowBlur = 16;
+      drawStar(handX + player.facing * 8, y, player.attackTime > 0 ? 9 : 6, color);
+    } else {
+      ctx.strokeStyle = color; ctx.beginPath(); ctx.arc(handX, y + 22, 17, player.facing > 0 ? -1.1 : Math.PI - 1.1, player.facing > 0 ? 1.1 : Math.PI + 1.1); ctx.stroke();
+      ctx.strokeStyle = '#ede5cb'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(handX + player.facing * 7, y + 7); ctx.lineTo(handX + player.facing * (player.attackTime > 0 ? -4 : 7), y + 22); ctx.lineTo(handX + player.facing * 7, y + 37); ctx.stroke();
+    }
+    if (player.shield > 0 || player.jump > 0) {
+      ctx.shadowBlur = 12; ctx.strokeStyle = player.shield > 0 ? '#71e4ff' : '#b6ff8a'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(x + 15, y + 21, 27, 33, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (player.skillTime > 0) {
+      ctx.globalAlpha = player.skillTime / .55; ctx.strokeStyle = color; ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(x + 15, y + 21, 20 + (1 - player.skillTime / .55) * (selectedClass === 'mage' ? 150 : 95), 0, Math.PI * 2); ctx.stroke();
     }
     ctx.restore();
   }
@@ -814,9 +1180,9 @@
   function draw(time) {
     drawBackground(time);
     ctx.save();
-    ctx.translate(-Math.round(camera), 0);
+    ctx.translate(-Math.round(camera) + (screenShake > 0 ? Math.sin(time * 80) * 3 : 0), screenShake > 0 ? Math.cos(time * 73) * 2 : 0);
     for (const block of level.solids) {
-      if (block.x + block.w >= camera - 50 && block.x < camera + W + 50) drawGround(block);
+      if (block.x + block.w >= camera - 50 && block.x < camera + W + 50) drawGround(block, time);
     }
     for (const spike of level.spikes) {
       ctx.fillStyle = '#f5e4e2';
@@ -837,6 +1203,11 @@
     }
     for (const enemy of level.enemies) {
       if (!enemy.alive) continue;
+      if (enemy.x < camera - 70 || enemy.x > camera + W + 70) continue;
+      ctx.save();
+      ctx.translate(enemy.x + 17, enemy.y + 32);
+      ctx.scale(enemy.stun > 0 ? 1.14 : 1, enemy.stun > 0 ? .84 : enemy.windup > 0 ? .91 : 1);
+      ctx.translate(-enemy.x - 17, -enemy.y - 32);
       const colors = { stalker: '#8f66b5', sentinel: '#668caf', spitter: '#a77d9e' };
       roundedRect(enemy.x, enemy.y + Math.sin(time * 8 + enemy.x) * 2, enemy.w, enemy.h, [15, 15, 5, 5], enemy.stun > 0 ? '#eecbff' : colors[enemy.type]);
       ctx.fillStyle = '#e6dcff';
@@ -853,21 +1224,37 @@
         roundedRect(enemy.x, enemy.y - 10, enemy.w, 4, 2, '#26324b');
         roundedRect(enemy.x, enemy.y - 10, enemy.w * enemy.hp / enemy.maxHp, 4, 2, '#ffb0b8');
       }
+      ctx.restore();
     }
     drawExtras(time);
     drawPortal(time);
+    for (const ghost of afterimages) {
+      ctx.save(); ctx.globalAlpha = ghost.life / .18 * .3;
+      roundedRect(ghost.x + 2, ghost.y + 5, 28, 34, 10, ghost.color); ctx.restore();
+    }
     drawPlayer(time);
     for (const p of particles) {
       ctx.globalAlpha = p.life / p.maxLife;
       drawStar(p.x, p.y, 5, p.color);
     }
     ctx.globalAlpha = 1;
+    for (const text of floaters) {
+      ctx.save(); ctx.globalAlpha = Math.min(1, text.life * 2);
+      ctx.fillStyle = text.color; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center';
+      ctx.shadowColor = '#142034'; ctx.shadowBlur = 4;
+      ctx.fillText(text.text, text.x, text.y); ctx.restore();
+    }
     ctx.restore();
     if (state === 'playing') {
       roundedRect(22, 22, 258, 39, 12, '#19234298');
       ctx.fillStyle = '#fff';
       ctx.font = '700 17px Outfit, sans-serif';
       ctx.fillText(level.name, 37, 48);
+      roundedRect(W - 196, 22, 174, 39, 12, '#19234298');
+      ctx.fillStyle = '#dfeaff'; ctx.font = '600 13px sans-serif';
+      ctx.fillText(`Explorado: ${Math.min(100, Math.round(player.x / (level.width - 100) * 100))}%`, W - 182, 40);
+      roundedRect(W - 182, 46, 146, 4, 2, '#465673');
+      roundedRect(W - 182, 46, 146 * Math.min(1, player.x / (level.width - 100)), 4, 2, heroClass().color);
     }
   }
 
@@ -893,6 +1280,8 @@
       if (control === 'jump') jumpQueued = true;
       if (control === 'attack') attackQueued = true;
       if (control === 'dodge') dodgeQueued = true;
+      if (control === 'skill') skillQueued = true;
+      if (control === 'interact') interactQueued = true;
     }
     controls[control] = true;
   });
@@ -901,7 +1290,7 @@
     if (control) { event.preventDefault(); controls[control] = false; }
   });
   window.addEventListener('blur', () => {
-    controls.left = controls.right = controls.jump = controls.attack = controls.dodge = false;
+    Object.keys(controls).forEach(key => { controls[key] = false; });
     if (state === 'playing') togglePause();
   });
   document.querySelectorAll('[data-control]').forEach(button => {
@@ -914,6 +1303,8 @@
         if (control === 'jump') jumpQueued = true;
         if (control === 'attack') attackQueued = true;
         if (control === 'dodge') dodgeQueued = true;
+        if (control === 'skill') skillQueued = true;
+        if (control === 'interact') interactQueued = true;
       }
       button.classList.add('active');
     });
@@ -923,7 +1314,16 @@
     button.addEventListener('lostpointercapture', release);
   });
   pauseButton.addEventListener('click', togglePause);
+  document.querySelectorAll('[data-hero]').forEach(button => {
+    button.addEventListener('click', () => {
+      if (!['menu', 'won', 'gameOver'].includes(state)) return;
+      selectedClass = button.dataset.hero;
+      document.querySelectorAll('[data-hero]').forEach(card => card.setAttribute('aria-pressed', String(card.dataset.hero === selectedClass)));
+      if (state === 'menu') { player = makePlayer(); updateHud(); }
+      document.getElementById('classHint').textContent = `${heroClass().name} selecionado · habilidade no nível 3: ${heroClass().skill}.`;
+    });
+  });
   loadLevel(0);
-  showOverlay('⚔', '5 FASES · ESPADAS · COMBATE', 'Salto das<br>Estrelas', 'Encontre espadas, enfrente guardas e caçadores, esquive dos ataques e derrote o Guardião do Eclipse!', 'Começar aventura', startGame);
+  showOverlay('✦', '4 CLASSES · XP · EXPLORAÇÃO', 'Salto das<br>Estrelas', 'Escolha sua classe, evolua nos combates e explore ruínas, baús e atalhos até o Guardião do Eclipse.', 'Começar aventura', startGame);
   requestAnimationFrame(frame);
 })();
