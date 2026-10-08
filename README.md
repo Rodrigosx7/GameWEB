@@ -20,17 +20,57 @@ python3 -m http.server 8000
 Abra http://localhost:8000. O progresso da aventura dura até recarregar a página;
 recordes por classe e a preferência de som ficam neste navegador.
 
-## Controles
+## Controles soulslike (mouse e teclado)
 
-- WASD ou setas: mover em relação à câmera.
-- Espaço: pular. W agora anda para a frente.
-- J/Z: atacar; segure para ataques contínuos.
-- Shift/K: esquivar, com invulnerabilidade breve e recarga.
-- Q/L: habilidade de classe, desbloqueada no nível 3.
-- E: interagir com placas, alavancas, baús e santuários.
-- P: pausar/continuar; perder foco também pausa.
-- Arrastar a cena: girar a câmera; roda do mouse: aproximar/afastar.
-- Celular: direção e ações nos botões de toque; arraste a cena para girar.
+Clique na cena ou em **Ativar câmera do mouse** para capturar o cursor.
+Mova o mouse para girar e inclinar a câmera. Esc pausa e libera o cursor.
+Se a captura não estiver disponível, mova o mouse sobre a cena para olhar.
+
+| Comando | Ação |
+| --- | --- |
+| WASD / setas | Andar em relação à câmera |
+| Clique esquerdo | Ataque leve; segurar repete |
+| Shift + clique esquerdo | Ataque forte com preparação e maior recuperação |
+| Segurar clique direito | Defesa frontal; início preciso faz parry |
+| Espaço breve | Esquiva direcional; sem direção, passo para trás |
+| Segurar Espaço + direção | Correr após 0,25s, consumindo stamina |
+| F | Pular |
+| Q / botão central do mouse | Travar ou liberar alvo |
+| Roda do mouse | Trocar alvo travado; sem alvo, ajustar distância |
+| Ctrl / L | Habilidade da classe (nível 3) |
+| E | Interagir |
+| R | Beber frasco de cura |
+| Esc / P | Pausar / continuar |
+| J / Z | Atalho de ataque leve |
+| K | Atalho de ataque forte |
+| B | Atalho de defesa |
+
+No celular, use os botões de movimento, ataques, defesa, corrida, esquiva,
+salto, alvo, frasco, habilidade e interação. Arrastar a cena gira a câmera.
+Perder foco pausa automaticamente e limpa botões segurados.
+
+## Stamina, defesa e cura
+
+Stamina é separada da energia mágica: máximo 100, recuperação de 28/s após
+0,65s sem gastar. Manter a guarda impede a recuperação. Ataque leve custa
+18 (12 para ladrão); forte 32; esquiva 25; salto 8; habilidade 22;
+corrida gasta 18/s. Ficar sem stamina impede a ação correspondente.
+
+Ataques e cura reduzem movimento durante suas animações. O golpe forte causa
+dano dobrado após 0,38s de preparação e deixa sentinelas vulneráveis.
+A esquiva tem invulnerabilidade breve e recarga por classe.
+
+Defesa só protege a frente e gasta 22 de stamina por HP bloqueado. Sem stamina,
+a guarda quebra e o personagem fica vulnerável brevemente. Começar a guarda
+até 0,18s antes de uma investida de inimigo comum faz parry: gasta 10 de stamina
+e atordoa o atacante por 1s. Chefões e projéteis são bloqueáveis, sem parry.
+
+Há três frascos por fase. R gasta uma carga e cura 3 HP após 0,9s; receber dano
+ou esquivar interrompe a cura e a carga permanece gasta. Santuários, morte e
+mudança de fase restauram as três cargas. Com vida cheia, o frasco não é gasto.
+
+Trava de alvo acompanha a câmera e mantém o personagem voltado ao inimigo
+enquanto anda para os lados. Morte ou distância excessiva libera o alvo.
 
 ## Classes e progressão
 
@@ -42,7 +82,7 @@ recordes por classe e a preferência de som ficam neste navegador.
 | Arqueiro | 4 | Flechas; 5 energia | Disparo triplo |
 
 A energia regenera 12 por segundo. Habilidades gastam energia e têm recarga.
-Ataques miram automaticamente no inimigo próximo à frente do personagem.
+Ataques usam o alvo travado ou o inimigo próximo à frente do personagem.
 
 Mobs dão 25–60 XP; o chefão dá 250 XP. Recompensas são concedidas uma única
 vez por inimigo e aventura. Primeiro nível exige 60 XP, depois +35 por nível;
