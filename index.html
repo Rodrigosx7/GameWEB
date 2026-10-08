@@ -1,86 +1,19 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#151a32" />
-    <title>Salto das Estrelas</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <main class="page">
-      <header class="topbar">
-        <div class="brand"><span class="brand-icon">✦</span><span>SALTO DAS ESTRELAS</span></div>
-        <button id="soundButton" class="sound-button" type="button" aria-pressed="true">Som: ligado</button>
-      </header>
-
-      <section id="classPicker" class="class-picker" aria-label="Escolha de classe">
-        <div class="picker-heading"><h2>Escolha seu caminho</h2><p id="classHint">Guerreiro selecionado · habilidade no nível 3: Redemoinho.</p></div>
-        <div class="class-grid">
-          <button type="button" class="class-card warrior-card" data-hero="warrior" aria-pressed="true"><span class="class-symbol">⚔</span><strong>Guerreiro</strong><span>5 HP · espada e resistência</span><small>Redemoinho em área</small></button>
-          <button type="button" class="class-card mage-card" data-hero="mage" aria-pressed="false"><span class="class-symbol">✧</span><strong>Mago</strong><span>3 HP · projéteis arcanos</span><small>Explosão arcana</small></button>
-          <button type="button" class="class-card rogue-card" data-hero="rogue" aria-pressed="false"><span class="class-symbol">◈</span><strong>Ladrão</strong><span>3 HP · agilidade e adagas</span><small>Ocultação e golpe crítico</small></button>
-          <button type="button" class="class-card archer-card" data-hero="archer" aria-pressed="false"><span class="class-symbol">➶</span><strong>Arqueiro</strong><span>4 HP · flechas à distância</span><small>Disparo de três flechas</small></button>
-        </div>
-      </section>
-
-      <section class="game-shell" aria-label="Jogo Salto das Estrelas">
-        <div class="hud">
-          <div class="hud-item"><span class="hud-label">FASE</span><strong id="levelLabel">1 / 5</strong></div>
-          <div class="hud-item"><span class="hud-label">ESTRELAS</span><strong id="coinLabel">0 / 0</strong></div>
-          <div class="hud-item"><span class="hud-label">VIDAS</span><strong id="livesLabel">♥ ♥ ♥ ♡ ♡</strong></div>
-          <button id="pauseButton" class="icon-button" type="button" aria-label="Pausar jogo" title="Pausar (P)">Ⅱ</button>
-        </div>
-
-        <div class="rpg-hud" aria-label="Progresso do personagem">
-          <div><strong id="classLabel">Guerreiro · Nível 1</strong><span id="hpLabel">5/5 HP · 0 moedas</span></div>
-          <div class="xp-display"><span id="xpLabel">0/60 XP</span><div class="xp-track"><div id="xpBar"></div></div></div>
-          <span id="energyLabel">100/100 energia · Habilidade no nível 3</span>
-        </div>
-
-        <div class="stage">
-          <canvas id="game" width="960" height="576" aria-label="Área do jogo de plataforma"></canvas>
-          <div id="overlay" class="overlay">
-            <div class="overlay-card">
-              <div id="overlayIcon" class="overlay-icon">✦</div>
-              <p id="overlayEyebrow" class="eyebrow">SUA AVENTURA COMEÇA AQUI</p>
-              <h1 id="overlayTitle">Salto das<br />Estrelas</h1>
-              <p id="overlayText">Corra, salte e colete estrelas. Chegue ao portal para avançar!</p>
-              <button id="overlayButton" class="primary-button" type="button">Começar aventura <span>→</span></button>
-            </div>
-          </div>
-        </div>
-
-        <div class="bottom-bar">
-          <p><kbd>A</kbd>/<kbd>D</kbd> mover · <kbd>Espaço</kbd> pular · <kbd>J</kbd>/<kbd>Z</kbd> atacar · <kbd>K</kbd>/<kbd>Shift</kbd> esquivar · <kbd>L</kbd>/<kbd>Q</kbd> habilidade · <kbd>E</kbd> interagir · <kbd>P</kbd> pausa</p>
-        </div>
-      </section>
-
-      <div class="touch-controls" aria-label="Controles de toque">
-        <div class="touch-directions">
-          <button class="touch-button" data-control="left" type="button" aria-label="Mover para a esquerda">←</button>
-          <button class="touch-button" data-control="right" type="button" aria-label="Mover para a direita">→</button>
-        </div>
-        <div class="touch-actions">
-          <button class="touch-button jump-button" data-control="jump" type="button" aria-label="Pular">PULAR ↑</button>
-          <button class="touch-button attack-button" data-control="attack" type="button" aria-label="Atacar">ATAQUE ⚔</button>
-          <button class="touch-button dodge-button" data-control="dodge" type="button" aria-label="Esquivar">ESQUIVA ⇢</button>
-        </div>
-        <div class="touch-utility">
-          <button class="touch-button skill-button" data-control="skill" type="button" aria-label="Usar habilidade">HABILIDADE ✦</button>
-          <button class="touch-button interact-button" data-control="interact" type="button" aria-label="Interagir">INTERAGIR E</button>
-        </div>
-      </div>
-
-      <section class="power-panel" aria-label="Poderes e dicas">
-        <p id="powerLabel">Nenhum poder ativo</p>
-        <p id="gameMessage" role="status" aria-live="polite"></p>
-        <p id="interactionLabel">E interage com placas, alavancas, baús e santuários.</p>
-        <div class="power-legend"><span>⚔ Equipamento de classe nas plataformas</span><span class="shield-legend">◆ Escudo · 10s</span><span class="jump-legend">↑ Super salto · 12s</span><span class="heart-legend">♥ Vida extra</span><span>⚑ Checkpoint</span></div>
-        <details class="reward-details"><summary>Recompensas de nível</summary><p id="rewardList"></p></details>
-      </section>
-      <footer><p>4 classes · 5 fases ampliadas · Recordes por classe</p></footer>
-    </main>
-    <script src="game.js" defer></script>
-  </body>
-</html>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#080f19"><title>Salto das Estrelas — 3D</title><link rel="stylesheet" href="styles.css"></head>
+<body><main class="page">
+<header class="topbar"><a class="brand" href="./"><span>✦</span> SALTO DAS ESTRELAS <b>3D</b></a><button id="soundButton" aria-pressed="true">Som ligado</button></header>
+<section class="game-shell" aria-label="Jogo de aventura em 3D">
+<div class="stage"><canvas tabindex="0" id="game" aria-label="Mundo tridimensional. Use WASD para mover, espaço para pular e J para atacar."></canvas>
+<div class="scene-vignette"></div>
+<div id="playHud" class="play-hud" hidden><div class="area-hud"><span id="levelLabel">01 / 05</span><strong id="areaLabel">Jardins do crepúsculo</strong><small id="sealLabel">Guardiões 0 / 3</small></div><button id="pauseButton" title="Pausar (P)" aria-label="Pausar">Ⅱ</button>
+<div class="hero-hud"><div><strong id="classLabel">Guerreiro · Nível 1</strong><span id="hpLabel"></span></div><div class="health-track"><i id="hpBar"></i></div><div class="energy-track"><i id="energyBar"></i></div><div class="xp-track"><i id="xpBar"></i></div><small id="xpLabel"></small><small id="coinLabel"></small></div><div class="objective-hud"><span id="livesLabel"></span><span id="powerLabel"></span><span id="abilityLabel"></span></div></div>
+<div id="bossHud" class="boss-hud" hidden><span>GUARDIÃO DO ECLIPSE</span><div><i id="bossBar"></i></div></div>
+<div id="interactionLabel" class="interaction-prompt" hidden></div><div id="gameMessage" class="toast" role="status" aria-live="polite"></div>
+<div id="overlay" class="overlay"><div class="overlay-card"><p id="overlayEyebrow" class="eyebrow">UMA NOVA DIMENSÃO</p><h1 id="overlayTitle">Entre nas<br><em>ruínas das estrelas.</em></h1><p id="overlayText">Explore ilhas esquecidas, enfrente guardiões e encontre seu caminho através do eclipse.</p>
+<div id="classPicker" class="class-picker" aria-label="Escolha uma classe"><button data-hero="warrior" aria-pressed="true"><span>⚔</span><strong>Guerreiro</strong><small>Espada · resistência</small></button><button data-hero="mage" aria-pressed="false"><span>✧</span><strong>Mago</strong><small>Magia · explosão</small></button><button data-hero="rogue" aria-pressed="false"><span>◈</span><strong>Ladrão</strong><small>Adagas · agilidade</small></button><button data-hero="archer" aria-pressed="false"><span>➶</span><strong>Arqueiro</strong><small>Arco · distância</small></button></div><p id="classHint" class="class-hint">5 HP · Redemoinho desbloqueado no nível 3</p><button id="overlayButton" class="primary-button">Começar aventura <span>→</span></button><p class="menu-footnote">5 mundos · 4 classes · câmera livre</p></div></div>
+</div>
+<div class="bottom-bar"><span><kbd>WASD</kbd> mover <kbd>Espaço</kbd> pular <kbd>J</kbd> atacar <kbd>Shift</kbd> esquivar <kbd>Q</kbd> habilidade <kbd>E</kbd> interagir</span><span>Arraste a cena para girar a câmera</span></div></section>
+<div class="touch-controls" aria-label="Controles para celular"><div class="dpad"><button data-control="forward" class="up" aria-label="Avançar">↑</button><button data-control="left" class="left" aria-label="Esquerda">←</button><button data-control="back" class="down" aria-label="Recuar">↓</button><button data-control="right" class="right" aria-label="Direita">→</button></div><div class="touch-actions"><button data-control="jump">Pular</button><button data-control="attack">⚔ Ataque</button><button data-control="dodge">Esquiva</button><button data-control="skill">✦ Poder</button><button data-control="interact">Interagir</button></div></div>
+<section class="below"><p><span class="live-dot"></span> AVENTURA 3D <span>Equipamentos guardados · XP por combate · Checkpoints</span></p></section><details class="guide"><summary>Controles, classes e recompensas</summary><p>WASD ou setas para andar; Espaço pula; J/Z ataca; Shift/K esquiva; Q/L usa habilidade a partir do nível 3; E interage; P pausa. Arraste a cena ou use os botões de toque para girar a câmera. A roda do mouse ajusta a distância.</p><p>Guerreiro: espada e redemoinho. Mago: projéteis e explosão arcana. Ladrão: adagas, ocultação e crítico. Arqueiro: flechas e disparo triplo. Ataques à distância miram automaticamente no inimigo próximo à sua frente.</p><p>XP de inimigos aumenta nível e concede vida, dano, energia ou recargas menores. Caçadores perseguem, sentinelas bloqueiam golpes frontais e atiradores atacam de longe. Ataque após a investida ou contorne a guarda. Derrote os três guardiões de cada fase. O eclipse final também exige vencer o chefão.</p><p>Baús elevados dão equipamentos após derrotar o guarda. Alavancas abrem pontes laterais; caixas se quebram com ataques; santuários curam por 30 moedas. Cristais dourados dão moedas. Progresso é mantido ao perder uma tentativa; três tentativas por aventura. A nova aventura reinicia a progressão.</p></details>
+</main><script src="vendor/three.min.js"></script><script src="game.js" defer></script></body></html>
