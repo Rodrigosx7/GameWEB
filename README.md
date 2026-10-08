@@ -18,7 +18,7 @@ python3 -m http.server 8000
 ```
 
 Abra http://localhost:8000. O progresso da aventura dura até recarregar a página;
-recordes por classe e a preferência de som ficam neste navegador.
+recordes por classe (solo) ou combinação de classes (coop) e a preferência de som ficam neste navegador.
 
 ## Controles soulslike (mouse e teclado)
 
@@ -48,6 +48,65 @@ Se a captura não estiver disponível, mova o mouse sobre a cena para olhar.
 No celular, use os botões de movimento, ataques, defesa, corrida, esquiva,
 salto, alvo, frasco, habilidade e interação. Arrastar a cena gira a câmera.
 Perder foco pausa automaticamente e limpa botões segurados.
+
+## Cooperativo local — 2 jogadores
+
+No menu, escolha **Coop local** e a classe de cada jogador. São dois
+personagens na mesma tela, com câmera compartilhada e um único mundo.
+J1 usa WASD/mouse. J2 pode usar um controle compatível com a Gamepad API,
+ou um segundo conjunto de teclas no mesmo teclado. Não há conexão de rede.
+
+### Jogador 2 no teclado
+
+| Ação | Tecla | Teclado numérico |
+| --- | --- | --- |
+| Mover | Setas | — |
+| Ataque leve | U | Num1 |
+| Ataque forte | O | Num2 |
+| Esquiva | M | Num3 |
+| Pulo | N | Num0 |
+| Defender | H / Ctrl direito | Num4 |
+| Interagir / reanimar | Enter | Num5 |
+| Frasco | Delete | Num6 |
+| Travar alvo | Backspace | Num7 |
+| Habilidade | Shift direito | Num8 |
+| Correr (segurar) | End | Num9 |
+
+No coop, as setas, Ctrl direito e Shift direito ficam reservados para J2.
+J1 usa WASD, Ctrl esquerdo e Shift esquerdo. H permite defender sem modificadores.
+
+### Jogador 2 no controle
+
+Conecte um controle e pressione um botão para que o navegador o reconheça.
+O primeiro controle conectado é atribuído ao jogador 2.
+
+- Analógico esquerdo: movimento com intensidade variável.
+- Analógico direito: câmera compartilhada.
+- RB/R1: ataque leve; RT/R2: ataque forte.
+- LB/L1: defesa; LT/L2: habilidade.
+- B/Círculo: toque esquiva; segurar + direção corre.
+- A/X: interagir/reanimar; X/Quadrado: frasco; Y/Triângulo: pulo.
+- Clique no analógico direito (R3): trava de alvo.
+- Start/Options: pausa e continua, também para os dois jogadores.
+
+### Regras da equipe
+
+Cada um tem classe, HP, energia, stamina, nível, moedas, equipamento e frascos
+próprios. XP de um inimigo derrotado é concedido aos dois, uma vez por aventura.
+Itens do mundo e baús são únicos e pertencem a quem os coleta. Os inimigos têm
+mais HP no coop e perseguem o jogador visível mais próximo. O chefão tem 58 HP
+no coop, em comparação com 36 no solo.
+
+Os personagens ficam a até 20 unidades de distância para permanecer na tela.
+O portal espera pelos dois, além dos guardiões e chefão habituais. Avançar de
+fase leva a dupla para a nova área e restaura saúde, energia, stamina e frascos.
+
+Um jogador com HP zero fica caído durante 20s. O outro pode se aproximar e
+pressionar interação; ficar parado por 2s reanima com metade do HP máximo.
+Mover-se ou receber dano cancela. Cair no abismo deixa o personagem caído no
+último chão seguro. Se ambos caírem ou os 20s acabarem, a equipe perde uma
+única tentativa e volta ao checkpoint. XP, equipamentos e progressão de
+exploração são preservados para os dois. A equipe começa com três tentativas.
 
 ## Stamina, defesa e cura
 
