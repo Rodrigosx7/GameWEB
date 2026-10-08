@@ -20,44 +20,59 @@ python3 -m http.server 8000
 Abra http://localhost:8000. O progresso da aventura dura até recarregar a página;
 recordes por classe (solo) ou combinação de classes (coop), atalhos e preferências de som/trava pelo mouse ficam neste navegador.
 
-## Controles configuráveis — teclado completo
+## Controles Souls — teclado e mouse
 
-Movimento, combate, câmera e menus funcionam pelo teclado. Abra a aba
-**Controles** com F1: há comandos separados de **Jogador 1**, **Jogador 2**
-e **Geral**. Selecione um comando com Tab e Enter, depois pressione a nova
-tecla. Esc cancela a edição. Teclas já usadas oferecem uma troca explícita
-entre os dois comandos; nada é sobrescrito silenciosamente. Restaurar padrões
-recupera os 50 atalhos. Teclas de navegação e atalhos reservados do navegador
-não podem ser atribuídos. As configurações ficam salvas neste navegador.
+Clique em **Começar aventura** para capturar o mouse. O cursor fica preso à
+cena; mover o mouse gira a câmera e orienta o personagem. WASD move em relação
+à visão, preservando a orientação ao recuar e andar de lado. Esc pausa e libera
+o cursor. Ao continuar, o mouse é capturado novamente; o botão **Capturar câmera
+do mouse** permite ativar manualmente. Se o navegador não permitir captura,
+segurar e arrastar a cena gira a câmera e os comandos de combate continuam ativos.
 
-| Ação | Jogador 1 | Jogador 2 |
+| Ação | Jogador 1 | Jogador 2 no teclado |
 | --- | --- | --- |
 | Movimento | WASD | Setas |
-| Correr (segurar) | Shift esquerdo | Shift direito |
+| Esquiva / passo para trás | Toque e solte Espaço | Toque e solte M |
+| Correr | Segure Espaço + direção | Segure M + direção |
+| Corrida alternativa | Shift esquerdo | Shift direito |
 | Pular | F | N |
-| Ataque leve / combo | J | U |
-| Ataque forte: segurar para carregar, soltar para golpear | K | O |
-| Defesa / parry (segurar) | L | B |
-| Esquiva / passo para trás | Espaço | M |
-| Habilidade da classe | C | P |
-| Travar / liberar alvo | Q | Backspace |
-| Alvo anterior / próximo | Z / X | [ / ] |
+| Ataque leve / combo | Clique esquerdo | U |
+| Ataque carregado | Segure Shift + clique esquerdo; solte o clique | Segure O; solte |
+| Defesa / parry | Segure clique direito | Segure B |
+| Habilidade da classe | Shift + clique direito | P |
+| Travar / liberar alvo | Botão central / Q | Backspace / Home |
+| Alvo anterior / próximo | Roda para cima / baixo | [ / ] |
 | Frasco | R | Delete |
 | Interagir / reanimar | E | Enter |
-| Câmera: esquerda / direita / cima / baixo | T / Y / G / H | Num4 / Num6 / Num8 / Num5 |
+| Câmera alternativa: esquerda / direita / cima / baixo | T / Y / G / H | Num4 / Num6 / Num8 / Num5 |
 | Zoom aproximar / afastar | 1 / 2 | Num+ / Num− |
 | Centralizar câmera | V | End |
 
-**Geral:** Esc pausa/continua; F1 abre/fecha Controles; F3 começa/continua a
-aventura; F2 alterna o som. Todos esses atalhos também podem ser alterados.
-Tab navega pelos menus, Enter ou Espaço ativa o botão selecionado e as setas
-laterais alternam as abas. Abrir Controles pausa a aventura; ao voltar, use
-F3 ou o botão Continuar. Perder foco também pausa e limpa comandos segurados.
+A corrida começa após 0,22s segurando a esquiva com movimento e consome stamina.
+Soltar depois de correr não dispara uma esquiva. Sem direção, o toque faz um
+passo para trás. Ataques não viram automaticamente para inimigos não travados;
+magia e flechas usam a direção da visão, ou miram no alvo travado.
 
-O clique no **botão central do mouse** trava/libera o alvo do Jogador 1 como
-alternativa opcional. Pode ser desligado em **Controles → Geral**. A câmera
-continua totalmente controlável pelo teclado. No celular, use um teclado
-externo; a interface se adapta à tela, mas esta versão não tem comandos de toque.
+**Geral:** Esc pausa/continua; F1 abre/fecha Controles; F3 começa/continua a
+aventura; F2 alterna o som. São padrões inspirados em controles de Souls no PC;
+as diferentes franquias e edições têm variações de atalhos.
+
+## Configurar comandos
+
+A aba **Controles (F1)** mantém comandos separados de Jogador 1, Jogador 2 e
+Geral. Há 52 atalhos configuráveis. Selecione um comando e pressione uma tecla,
+ou clique/role na área de captura para atribuir o mouse a J1. Segure Shift para
+combinar uma tecla ou botão; solte Shift sozinho para atribuir apenas Shift.
+Esc cancela. Conflitos oferecem troca explícita entre dois comandos. Restaurar
+padrões recupera o novo layout Souls. As configurações ficam salvas no navegador;
+esta versão adota novos padrões sem reutilizar o antigo layout somente teclado.
+
+Em **Geral**, ajuste sensibilidade e inversão vertical do mouse e escolha
+**Teclado** ou **Controle (gamepad)** para J2. Todos os atalhos de teclado e mouse
+continuam personalizáveis, incluindo os comandos gerais. Tab navega nos menus,
+Enter ou Espaço ativa botões e setas laterais alternam abas. Abrir Controles ou
+perder foco pausa e limpa comandos segurados. Em telas móveis, use periféricos
+compatíveis; não há comandos de toque.
 
 ## Combos, carga e animações
 
@@ -85,11 +100,41 @@ próprias de preparação, impacto e recuperação.
 
 ## Cooperativo local — 2 jogadores
 
-No menu, escolha **Coop local** e a classe de cada jogador. São dois personagens
-no mesmo mundo, com câmera compartilhada. Os atalhos dos dois podem ser
-configurados separadamente para acomodar seu teclado. Combos, carga e filas
-de comandos são independentes; o botão central é uma alternativa apenas de J1.
-Não há conexão de rede.
+No menu, escolha **Coop local**, a classe de cada jogador e os comandos de J2:
+**Teclado** ou **Controle (gamepad)**. J1 usa teclado/mouse. São dois personagens
+no mesmo mundo e câmera compartilhada. Combos, carga e filas de comandos são
+independentes. Não há conexão de rede.
+
+### Controle do Jogador 2
+
+Compatível com controles que o navegador expõe pela Gamepad API com mapeamento
+**standard**, como controles Xbox e PlayStation reconhecidos pelo sistema.
+Conecte e pressione um botão para o navegador reconhecer; depois solte os
+botões e centralize o analógico esquerdo para ativar. O primeiro controle padrão
+conectado é atribuído a J2.
+
+| Controle Xbox / PlayStation | Ação |
+| --- | --- |
+| Analógico esquerdo | Movimento com intensidade variável |
+| Analógico direito | Girar / inclinar câmera compartilhada |
+| RB / R1 | Ataque leve; segurar repete combos |
+| RT / R2 | Segurar carrega, soltar executa o golpe forte |
+| LB / L1 | Defesa / parry |
+| LT / L2 | Habilidade da classe |
+| B / Círculo | Toque esquiva; segurar + direção corre |
+| A / X | Interagir / reanimar |
+| X / Quadrado | Frasco |
+| Y / Triângulo | Pular |
+| R3 | Travar / liberar alvo |
+| Direcional esquerdo / direito | Trocar alvo |
+| L3 | Corrida alternativa |
+| Start / Options | Pausar / continuar |
+
+O analógico tem zona morta de 18% para evitar movimento involuntário. Desconectar
+limpa comandos e cargas de J2; reconectar exige soltar botões antes de continuar.
+Se a Gamepad API estiver indisponível, mude J2 para Teclado. Durante a pausa,
+solte os botões e use Start novamente para continuar. A câmera do mouse pode
+precisar de um clique ao retomar pelo controle, por exigência do navegador.
 
 ### Regras da equipe
 
@@ -143,7 +188,7 @@ enquanto anda para os lados. Morte ou distância excessiva libera o alvo.
 | Arqueiro | 4 | Flechas; 5 energia | Disparo triplo |
 
 A energia regenera 12 por segundo. Habilidades gastam energia e têm recarga.
-Ataques usam o alvo travado ou o inimigo próximo à frente do personagem.
+Ataques usam a direção da visão; travar o alvo permite mirar e acompanhar esse inimigo.
 
 Mobs dão 25–60 XP; o chefão dá 250 XP. Recompensas são concedidas uma única
 vez por inimigo e aventura. Primeiro nível exige 60 XP, depois +35 por nível;
@@ -176,6 +221,20 @@ Três tentativas por aventura. Quedas ou HP zero consomem uma tentativa.
 XP, moedas, equipamento, itens coletados, pontes e inimigos derrotados são
 preservados. Inimigos vivos voltam às posições; o chefão vivo recupera HP.
 Avançar de fase recupera saúde e energia. Nova aventura reinicia a progressão.
+
+## Colisões
+
+Os personagens usam uma base circular com altura, subdivisão do deslocamento
+para evitar atravessar obstáculos em esquivas e deslizamento pelas quinas.
+Laterais e partes inferiores das plataformas são sólidas; a aterrissagem usa a
+superfície mais alta cruzada pelo movimento, incluindo topos de obstáculos.
+Pilares, troncos, baús, caixas e bases de santuários possuem colisão. Caixas
+quebradas deixam de bloquear imediatamente. Saltos e pontes continuam necessários
+para alcançar rotas elevadas e atravessar vãos.
+
+Projéteis verificam o trajeto inteiro contra volumes sólidos e personagens.
+A câmera também verifica o caminho até o personagem para evitar atravessar
+paredes. A mesma geometria de colisão é usada pelos dois jogadores e inimigos.
 
 ## Arquivos e licença
 
