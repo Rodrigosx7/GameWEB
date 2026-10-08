@@ -18,76 +18,78 @@ python3 -m http.server 8000
 ```
 
 Abra http://localhost:8000. O progresso da aventura dura até recarregar a página;
-recordes por classe (solo) ou combinação de classes (coop) e a preferência de som ficam neste navegador.
+recordes por classe (solo) ou combinação de classes (coop), atalhos e preferências de som/trava pelo mouse ficam neste navegador.
 
-## Controles soulslike (mouse e teclado)
+## Controles configuráveis — teclado completo
 
-Clique na cena ou em **Ativar câmera do mouse** para capturar o cursor.
-Mova o mouse para girar e inclinar a câmera. Esc pausa e libera o cursor.
-Se a captura não estiver disponível, mova o mouse sobre a cena para olhar.
+Movimento, combate, câmera e menus funcionam pelo teclado. Abra a aba
+**Controles** com F1: há comandos separados de **Jogador 1**, **Jogador 2**
+e **Geral**. Selecione um comando com Tab e Enter, depois pressione a nova
+tecla. Esc cancela a edição. Teclas já usadas oferecem uma troca explícita
+entre os dois comandos; nada é sobrescrito silenciosamente. Restaurar padrões
+recupera os 50 atalhos. Teclas de navegação e atalhos reservados do navegador
+não podem ser atribuídos. As configurações ficam salvas neste navegador.
 
-| Comando | Ação |
-| --- | --- |
-| WASD / setas | Andar em relação à câmera |
-| Clique esquerdo | Ataque leve; segurar repete |
-| Shift + clique esquerdo | Ataque forte com preparação e maior recuperação |
-| Segurar clique direito | Defesa frontal; início preciso faz parry |
-| Espaço breve | Esquiva direcional; sem direção, passo para trás |
-| Segurar Espaço + direção | Correr após 0,25s, consumindo stamina |
-| F | Pular |
-| Q / botão central do mouse | Travar ou liberar alvo |
-| Roda do mouse | Trocar alvo travado; sem alvo, ajustar distância |
-| Ctrl / L | Habilidade da classe (nível 3) |
-| E | Interagir |
-| R | Beber frasco de cura |
-| Esc / P | Pausar / continuar |
-| J / Z | Atalho de ataque leve |
-| K | Atalho de ataque forte |
-| B | Atalho de defesa |
+| Ação | Jogador 1 | Jogador 2 |
+| --- | --- | --- |
+| Movimento | WASD | Setas |
+| Correr (segurar) | Shift esquerdo | Shift direito |
+| Pular | F | N |
+| Ataque leve / combo | J | U |
+| Ataque forte: segurar para carregar, soltar para golpear | K | O |
+| Defesa / parry (segurar) | L | B |
+| Esquiva / passo para trás | Espaço | M |
+| Habilidade da classe | C | P |
+| Travar / liberar alvo | Q | Backspace |
+| Alvo anterior / próximo | Z / X | [ / ] |
+| Frasco | R | Delete |
+| Interagir / reanimar | E | Enter |
+| Câmera: esquerda / direita / cima / baixo | T / Y / G / H | Num4 / Num6 / Num8 / Num5 |
+| Zoom aproximar / afastar | 1 / 2 | Num+ / Num− |
+| Centralizar câmera | V | End |
 
-No celular, use os botões de movimento, ataques, defesa, corrida, esquiva,
-salto, alvo, frasco, habilidade e interação. Arrastar a cena gira a câmera.
-Perder foco pausa automaticamente e limpa botões segurados.
+**Geral:** Esc pausa/continua; F1 abre/fecha Controles; F3 começa/continua a
+aventura; F2 alterna o som. Todos esses atalhos também podem ser alterados.
+Tab navega pelos menus, Enter ou Espaço ativa o botão selecionado e as setas
+laterais alternam as abas. Abrir Controles pausa a aventura; ao voltar, use
+F3 ou o botão Continuar. Perder foco também pausa e limpa comandos segurados.
+
+O clique no **botão central do mouse** trava/libera o alvo do Jogador 1 como
+alternativa opcional. Pode ser desligado em **Controles → Geral**. A câmera
+continua totalmente controlável pelo teclado. No celular, use um teclado
+externo; a interface se adapta à tela, mas esta versão não tem comandos de toque.
+
+## Combos, carga e animações
+
+Cada arma tem uma sequência de três ataques leves. Espada alterna cortes e
+termina numa estocada; adagas alternam braços e terminam com as duas mãos;
+cajado alterna gestos de conjuração; arco usa diferentes poses de puxada e
+liberação. O terceiro golpe causa **1,5×** o dano. A sequência reinicia após
+1,15s sem renovar o combo. Segurar o ataque leve repete a sequência.
+
+Segurar o ataque forte inicia uma carga de até **1,1s**. Soltar executa o golpe;
+na carga máxima ele é disparado automaticamente. O dano varia de **2× a 3,5×**
+e o custo de stamina de **32 a 44**, incluindo uma reserva inicial de 8.
+Esquivar ou receber dano cancela a carga, sem devolver essa reserva.
+A interface mostra a porcentagem da carga de cada jogador.
+
+Golpes têm preparação e acertam durante a animação. Comandos de ataque,
+esquiva ou habilidade dados durante a recuperação aguardam até 0,42s para
+executar quando possível. Isso permite encadear movimentos sem exigir uma
+tecla no instante exato. A preparação de um golpe comprometido não é cancelada
+por esquiva. Iniciar a carga reduz a velocidade; não permite salto, cura ou habilidade.
+
+Braços, pernas, capa e tronco usam transições suaves. Movimento acelera e
+freia rapidamente; giros do personagem são interpolados e cada arma tem poses
+próprias de preparação, impacto e recuperação.
 
 ## Cooperativo local — 2 jogadores
 
-No menu, escolha **Coop local** e a classe de cada jogador. São dois
-personagens na mesma tela, com câmera compartilhada e um único mundo.
-J1 usa WASD/mouse. J2 pode usar um controle compatível com a Gamepad API,
-ou um segundo conjunto de teclas no mesmo teclado. Não há conexão de rede.
-
-### Jogador 2 no teclado
-
-| Ação | Tecla | Teclado numérico |
-| --- | --- | --- |
-| Mover | Setas | — |
-| Ataque leve | U | Num1 |
-| Ataque forte | O | Num2 |
-| Esquiva | M | Num3 |
-| Pulo | N | Num0 |
-| Defender | H / Ctrl direito | Num4 |
-| Interagir / reanimar | Enter | Num5 |
-| Frasco | Delete | Num6 |
-| Travar alvo | Backspace | Num7 |
-| Habilidade | Shift direito | Num8 |
-| Correr (segurar) | End | Num9 |
-
-No coop, as setas, Ctrl direito e Shift direito ficam reservados para J2.
-J1 usa WASD, Ctrl esquerdo e Shift esquerdo. H permite defender sem modificadores.
-
-### Jogador 2 no controle
-
-Conecte um controle e pressione um botão para que o navegador o reconheça.
-O primeiro controle conectado é atribuído ao jogador 2.
-
-- Analógico esquerdo: movimento com intensidade variável.
-- Analógico direito: câmera compartilhada.
-- RB/R1: ataque leve; RT/R2: ataque forte.
-- LB/L1: defesa; LT/L2: habilidade.
-- B/Círculo: toque esquiva; segurar + direção corre.
-- A/X: interagir/reanimar; X/Quadrado: frasco; Y/Triângulo: pulo.
-- Clique no analógico direito (R3): trava de alvo.
-- Start/Options: pausa e continua, também para os dois jogadores.
+No menu, escolha **Coop local** e a classe de cada jogador. São dois personagens
+no mesmo mundo, com câmera compartilhada. Os atalhos dos dois podem ser
+configurados separadamente para acomodar seu teclado. Combos, carga e filas
+de comandos são independentes; o botão central é uma alternativa apenas de J1.
+Não há conexão de rede.
 
 ### Regras da equipe
 
@@ -112,11 +114,11 @@ exploração são preservados para os dois. A equipe começa com três tentativa
 
 Stamina é separada da energia mágica: máximo 100, recuperação de 28/s após
 0,65s sem gastar. Manter a guarda impede a recuperação. Ataque leve custa
-18 (12 para ladrão); forte 32; esquiva 25; salto 8; habilidade 22;
+18 (12 para ladrão); forte 32–44 conforme carga; esquiva 25; salto 8; habilidade 22;
 corrida gasta 18/s. Ficar sem stamina impede a ação correspondente.
 
 Ataques e cura reduzem movimento durante suas animações. O golpe forte causa
-dano dobrado após 0,38s de preparação e deixa sentinelas vulneráveis.
+2×–3,5× o dano após a carga e 0,22s de preparação final, deixando sentinelas vulneráveis.
 A esquiva tem invulnerabilidade breve e recarga por classe.
 
 Defesa só protege a frente e gasta 22 de stamina por HP bloqueado. Sem stamina,
@@ -124,7 +126,7 @@ a guarda quebra e o personagem fica vulnerável brevemente. Começar a guarda
 até 0,18s antes de uma investida de inimigo comum faz parry: gasta 10 de stamina
 e atordoa o atacante por 1s. Chefões e projéteis são bloqueáveis, sem parry.
 
-Há três frascos por fase. R gasta uma carga e cura 3 HP após 0,9s; receber dano
+Há três frascos por fase. O comando de frasco gasta uma carga e cura 3 HP após 0,9s; receber dano
 ou esquivar interrompe a cura e a carga permanece gasta. Santuários, morte e
 mudança de fase restauram as três cargas. Com vida cheia, o frasco não é gasto.
 
@@ -177,7 +179,7 @@ Avançar de fase recupera saúde e energia. Nova aventura reinicia a progressão
 
 ## Arquivos e licença
 
-`index.html`, `styles.css`, `game.js` e `vendor/` formam o jogo completo.
+`index.html`, `styles.css`, `controls.js`, `game.js` e `vendor/` formam o jogo completo.
 Modelos e cenários são construídos em código; não dependem de assets remotos.
 Three.js r158: licença MIT em `vendor/THREE-LICENSE.txt`.
 
